@@ -1,0 +1,6 @@
+{% import 'components/_macros.html.twig' as m %}
+{{ m.tabbed_list([
+    {label: 'Browser', rows: browsers},
+    {label: 'OS', rows: oses},
+    {label: 'Device', rows: devices}
+]) }}

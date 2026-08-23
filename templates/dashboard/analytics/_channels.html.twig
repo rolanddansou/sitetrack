@@ -1,0 +1,15 @@
+{% import 'components/_macros.html.twig' as m %}
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <div class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">
+        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4">Channels</h3>
+        <canvas data-controller="chart"
+                data-chart-type-value="doughnut"
+                data-chart-data-value="{{ channels|json_encode }}"
+                data-chart-target="canvas"></canvas>
+    </div>
+
+    {{ m.tabbed_list([
+        {label: 'Referrer', rows: topReferrers},
+        {label: 'Campaign', rows: topCampaigns}
+    ]) }}
+</div>

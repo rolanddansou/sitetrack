@@ -1,0 +1,31 @@
+{% import 'components/_macros.html.twig' as m %}
+<div class="flex flex-wrap divide-x divide-slate-100">
+    <div class="pr-6" data-kpi="visitors">
+        <p class="text-xs font-medium text-slate-500">Visitors</p>
+        <p class="mt-1 text-2xl font-bold text-slate-900">{{ uniqueVisitors }}</p>
+        {{ m.kpi_delta(visitorsDelta) }}
+    </div>
+    <div class="px-6" data-kpi="pageviews">
+        <p class="text-xs font-medium text-slate-500">Pageviews</p>
+        <p class="mt-1 text-2xl font-bold text-slate-900">{{ pageviews }}</p>
+        {{ m.kpi_delta(pageviewsDelta) }}
+    </div>
+    <div class="px-6" data-kpi="bounce-rate">
+        <p class="text-xs font-medium text-slate-500">Bounce rate</p>
+        <p class="mt-1 text-2xl font-bold text-slate-900">{{ bounceRate }}%</p>
+        {{ m.kpi_delta(bounceRateDelta) }}
+    </div>
+    <div class="px-6" data-kpi="session-time">
+        <p class="text-xs font-medium text-slate-500">Session time</p>
+        <p class="mt-1 text-2xl font-bold text-slate-900">{{ avgSessionDuration }}</p>
+        {{ m.kpi_delta(sessionTimeDelta) }}
+    </div>
+
+    <div class="pl-6" data-kpi="online-now" data-controller="online-now" data-online-now-url-value="{{ path('analytics_online_now') }}">
+        <p class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+            Online
+            <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+        </p>
+        <p class="mt-1 text-2xl font-bold text-slate-900" data-online-now-target="count">{{ onlineNow }}</p>
+    </div>
+</div>

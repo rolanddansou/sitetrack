@@ -12,10 +12,8 @@ use App\Domain\Repository\AlertRuleRepositoryInterface;
 use App\Domain\Repository\CheckResultRepositoryInterface;
 use App\Domain\Repository\MonitorRepositoryInterface;
 use App\Domain\Repository\SmtpTestRepositoryInterface;
-use App\Domain\Repository\TenantMembershipRepositoryInterface;
-use App\Domain\Repository\TenantRepositoryInterface;
 use App\Domain\Service\PasswordEncryptorInterface;
-use App\Infrastructure\Security\IdentityUser;
+use App\Infrastructure\Security\CurrentTenantResolver;
 use App\Infrastructure\Security\MonitorVoter;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -32,31 +30,16 @@ class DashboardController extends AbstractController
         private CheckResultRepositoryInterface $checkResultRepository,
         private SmtpTestRepositoryInterface $smtpTestRepository,
         private AlertRuleRepositoryInterface $alertRuleRepository,
-        private TenantMembershipRepositoryInterface $tenantMembershipRepository,
-        private TenantRepositoryInterface $tenantRepository,
+        private CurrentTenantResolver $currentTenantResolver,
         private PasswordEncryptorInterface $passwordEncryptor,
         private ValidatorInterface $validator,
         private Connection $connection
     ) {}
 
-    private function currentTenantId(): int
+    #[Route('/dashboard/availability', name: 'availability_index')]
+    public function availability(): Response
     {
-        /** @var IdentityUser $user */
-        $user = $this->getUser();
-        $identityId = $user->getIdentity()->getId();
-
-        $memberships = $this->tenantMembershipRepository->findByIdentityId($identityId ?? 0);
-        if (count($memberships) === 0) {
-            throw $this->createAccessDeniedException('No tenant membership found for this identity.');
-        }
-
-        return $memberships[0]->getTenantId();
-    }
-
-    #[Route('/dashboard', name: 'dashboard_index')]
-    public function index(): Response
-    {
-        $monitors = $this->monitorRepository->findActiveMonitorsByTenant($this->currentTenantId());
+        $monitors = $this->monitorRepository->findActiveMonitorsByTenant($this->currentTenantResolver->resolve());
         $monitorData = [];
 
         foreach ($monitors as $monitor) {
@@ -84,7 +67,7 @@ class DashboardController extends AbstractController
             ];
         }
 
-        return $this->render('dashboard/index.html.twig', [
+        return $this->render('dashboard/availability.html.twig', [
             'monitors' => $monitorData,
         ]);
     }
@@ -113,7 +96,7 @@ class DashboardController extends AbstractController
                 }
             } else {
                 $monitor = new Monitor(
-                    tenantId: $this->currentTenantId(),
+                    tenantId: $this->currentTenantResolver->resolve(),
                     name: $dto->name,
                     type: $dto->type,
                     target: $dto->target,
@@ -133,7 +116,7 @@ class DashboardController extends AbstractController
 
                 $this->monitorRepository->save($monitor);
                 $this->addFlash('success', 'Monitor created successfully.');
-                return $this->redirectToRoute('dashboard_index');
+                return $this->redirectToRoute('availability_index');
             }
         }
 
@@ -198,7 +181,7 @@ class DashboardController extends AbstractController
             $this->monitorRepository->delete($monitor);
             $this->addFlash('success', 'Monitor deleted successfully.');
         }
-        return $this->redirectToRoute('dashboard_index');
+        return $this->redirectToRoute('availability_index');
     }
 
     #[Route('/monitor/{publicId}/rule/new', name: 'rule_new', methods: ['POST'])]
@@ -234,73 +217,5 @@ class DashboardController extends AbstractController
         }
 
         return $this->redirectToRoute('monitor_show', ['publicId' => $publicId]);
-    }
-
-    #[Route('/analytics', name: 'analytics_index', methods: ['GET'])]
-    public function analytics(): Response
-    {
-        $tenant = $this->tenantRepository->find($this->currentTenantId());
-        if ($tenant === null) {
-            throw $this->createNotFoundException('Tenant not found');
-        }
-        $siteId = $tenant->getSiteId();
-
-        $uniqueVisitors = (int) $this->connection->createQueryBuilder()
-            ->select('COUNT(DISTINCT session_id)')
-            ->from('analytics_events')
-            ->where('site_id = :siteId')
-            ->setParameter('siteId', $siteId)
-            ->executeQuery()
-            ->fetchOne();
-
-        $pageviews = (int) $this->connection->createQueryBuilder()
-            ->select('COUNT(*)')
-            ->from('analytics_events')
-            ->where('site_id = :siteId')
-            ->setParameter('siteId', $siteId)
-            ->executeQuery()
-            ->fetchOne();
-
-        $topPages = $this->connection->createQueryBuilder()
-            ->select('path, COUNT(*) as count')
-            ->from('analytics_events')
-            ->where('site_id = :siteId')
-            ->setParameter('siteId', $siteId)
-            ->groupBy('path')
-            ->orderBy('count', 'DESC')
-            ->setMaxResults(10)
-            ->executeQuery()
-            ->fetchAllAssociative();
-
-        $topReferrers = $this->connection->createQueryBuilder()
-            ->select('referrer, COUNT(*) as count')
-            ->from('analytics_events')
-            ->where('site_id = :siteId')
-            ->setParameter('siteId', $siteId)
-            ->groupBy('referrer')
-            ->orderBy('count', 'DESC')
-            ->setMaxResults(10)
-            ->executeQuery()
-            ->fetchAllAssociative();
-
-        $countries = $this->connection->createQueryBuilder()
-            ->select('country, COUNT(*) as count')
-            ->from('analytics_events')
-            ->where('site_id = :siteId')
-            ->setParameter('siteId', $siteId)
-            ->groupBy('country')
-            ->orderBy('count', 'DESC')
-            ->setMaxResults(10)
-            ->executeQuery()
-            ->fetchAllAssociative();
-
-        return $this->render('dashboard/analytics.html.twig', [
-            'siteId' => $siteId,
-            'uniqueVisitors' => $uniqueVisitors,
-            'pageviews' => $pageviews,
-            'topPages' => $topPages,
-            'topReferrers' => $topReferrers,
-            'countries' => $countries,
-        ]);
     }
 }

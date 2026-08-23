@@ -37,6 +37,14 @@
     </div>
 {% endmacro %}
 
+{% macro kpi_delta(delta = null) %}
+    {% if delta is not null %}
+        <p class="mt-1 text-xs font-semibold {{ delta.good ? 'text-emerald-600' : 'text-red-500' }}">
+            {{ delta.percent }}% {{ delta.up ? '↑' : '↓' }}
+        </p>
+    {% endif %}
+{% endmacro %}
+
 {% macro testimonial_card(quote, name, handle) %}
     <div class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">
         <p class="text-sm text-slate-700">&ldquo;{{ quote }}&rdquo;</p>
@@ -68,6 +76,40 @@
         <a href="{{ cta_href }}" class="mt-8 inline-flex items-center justify-center px-5 py-2.5 rounded-md text-sm font-semibold shadow-sm {{ featured ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50' }}">
             {{ cta_label }}
         </a>
+    </div>
+{% endmacro %}
+
+{% macro tabbed_list(tabs) %}
+    <div class="bg-white shadow-sm rounded-lg border border-slate-200 overflow-hidden" data-controller="tabs">
+        <div class="flex border-b border-slate-200 bg-slate-50">
+            {% for tab in tabs %}
+                <button type="button"
+                        class="px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 {{ loop.first ? 'text-indigo-600 border-indigo-600' : 'text-slate-400 border-transparent' }}"
+                        data-tabs-target="tab"
+                        data-action="click->tabs#show"
+                        data-tabs-index-param="{{ loop.index0 }}">
+                    {{ tab.label }}
+                </button>
+            {% endfor %}
+        </div>
+        {% for tab in tabs %}
+            <div class="{{ not loop.first ? 'hidden' : '' }}" data-tabs-target="panel">
+                {% if tab.rows is empty %}
+                    <p class="text-xs text-slate-400 p-6 text-center">No data yet.</p>
+                {% else %}
+                    <table class="min-w-full divide-y divide-slate-100 text-xs">
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            {% for row in tab.rows %}
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-6 py-3 font-medium text-slate-700 truncate max-w-xs">{{ row.label ?: 'Unknown' }}</td>
+                                    <td class="px-6 py-3 text-right text-slate-500 font-semibold">{{ row.count }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+            </div>
+        {% endfor %}
     </div>
 {% endmacro %}
 

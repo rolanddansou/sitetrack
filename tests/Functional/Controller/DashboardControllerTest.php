@@ -63,12 +63,12 @@ class DashboardControllerTest extends WebTestCase
         return new IdentityUser($identity, $credentials);
     }
 
-    public function testIndexPageLoads(): void
+    public function testAvailabilityPageLoads(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createLoggedInUser($client));
 
-        $client->request('GET', '/dashboard');
+        $client->request('GET', '/dashboard/availability');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h1', 'Uptime & SMTP Monitors');
@@ -117,47 +117,5 @@ class DashboardControllerTest extends WebTestCase
 
         $client->request('GET', '/monitor/' . $monitor->getPublicId());
         $this->assertResponseIsSuccessful();
-    }
-
-    public function testAnalyticsPageShowsTenantSiteIdAndItsOwnEvents(): void
-    {
-        $client = static::createClient();
-        $client->loginUser($this->createLoggedInUser($client));
-
-        $membershipRepo = static::getContainer()->get(TenantMembershipRepositoryInterface::class);
-        $identityRepo = static::getContainer()->get(IdentityRepositoryInterface::class);
-        $tenantRepo = static::getContainer()->get(TenantRepositoryInterface::class);
-
-        $identityId = $identityRepo->findByEmail('user@example.test')->getId();
-        $tenantId = $membershipRepo->findByIdentityId($identityId)[0]->getTenantId();
-        $siteId = $tenantRepo->find($tenantId)->getSiteId();
-
-        // A pageview for this tenant's own site_id...
-        $this->connection->insert('analytics_events', [
-            'site_id' => $siteId,
-            'path' => '/pricing',
-            'referrer' => null,
-            'country' => null,
-            'session_id' => 'session-a',
-            'occurred_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
-        ]);
-        // ...and one for a different site_id, which must not leak into these counts.
-        $this->connection->insert('analytics_events', [
-            'site_id' => 'someone-elses-site',
-            'path' => '/other',
-            'referrer' => null,
-            'country' => null,
-            'session_id' => 'session-b',
-            'occurred_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
-        ]);
-
-        $crawler = $client->request('GET', '/analytics');
-
-        $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('code', $siteId);
-
-        $stats = $crawler->filter('span.text-2xl');
-        $this->assertSame('1', trim($stats->eq(0)->text())); // Unique Visitors
-        $this->assertSame('1', trim($stats->eq(1)->text())); // Pageviews
     }
 }

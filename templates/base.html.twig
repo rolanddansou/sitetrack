@@ -21,8 +21,11 @@
                             </span>
                         </div>
                         <nav class="ml-6 flex space-x-8">
-                            <a href="{{ path('dashboard_index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'dashboard' or app.request.attributes.get('_route') starts with 'monitor' ? 'border-indigo-500 text-slate-900' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }}">
+                            <a href="{{ path('dashboard_index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') == 'dashboard_index' ? 'border-indigo-500 text-slate-900' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }}">
                                 Dashboard
+                            </a>
+                            <a href="{{ path('availability_index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'availability' or app.request.attributes.get('_route') starts with 'monitor' or app.request.attributes.get('_route') == 'rule_new' ? 'border-indigo-500 text-slate-900' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }}">
+                                Disponibilité
                             </a>
                             <a href="{{ path('analytics_index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'analytics' ? 'border-indigo-500 text-slate-900' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }}">
                                 Analytics
