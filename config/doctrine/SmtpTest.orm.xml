@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                                      https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+
+    <entity name="App\Domain\Entity\SmtpTest" table="smtp_tests">
+        <id name="id" type="string" length="64">
+            <generator strategy="NONE"/>
+        </id>
+        <field name="monitorId" type="integer" column="monitor_id"/>
+        <field name="status" type="string" length="50"/>
+        <field name="sentAt" type="datetime_immutable" column="sent_at"/>
+        <field name="receivedAt" type="datetime_immutable" column="received_at" nullable="true"/>
+        <field name="deliveryTimeSeconds" type="integer" column="delivery_time_seconds" nullable="true"/>
+        <field name="spamScore" type="float" column="spam_score" nullable="true"/>
+        <field name="spfPassed" type="boolean" column="spf_passed" nullable="true"/>
+        <field name="dkimPassed" type="boolean" column="dkim_passed" nullable="true"/>
+        <field name="dmarcPassed" type="boolean" column="dmarc_passed" nullable="true"/>
+        <field name="errorMessage" type="text" column="error_message" nullable="true"/>
+    </entity>
+
+</doctrine-mapping>

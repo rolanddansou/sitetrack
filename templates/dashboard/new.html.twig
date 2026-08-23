@@ -1,0 +1,157 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Monitor - SiteTrack{% endblock %}
+
+{% block body %}
+<div class="max-w-2xl mx-auto px-4 sm:px-0">
+    <div class="mb-6">
+        <a href="{{ path('dashboard_index') }}" class="text-xs text-indigo-600 hover:text-indigo-900 flex items-center gap-1 mb-2">
+            &larr; Back to Dashboard
+        </a>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900">Create a New Monitor</h1>
+        <p class="text-sm text-slate-500">Add a new URL to ping or SMTP credentials to verify deliverability.</p>
+    </div>
+
+    <div class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">
+        <form method="POST" action="{{ path('monitor_new') }}" class="space-y-6">
+            <div>
+                <label for="name" class="block text-sm font-semibold text-slate-700">Monitor Name</label>
+                <input type="text" name="name" id="name" value="{{ dto.name }}" required
+                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                {% if errors.name is defined %}
+                    <p class="mt-1 text-xs text-red-600">{{ errors.name }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="type" class="block text-sm font-semibold text-slate-700">Monitor Type</label>
+                <select name="type" id="type" onchange="toggleTypeFields()"
+                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                    <option value="http" {{ dto.type == 'http' ? 'selected' : '' }}>HTTP(S) Ping</option>
+                    <option value="smtp" {{ dto.type == 'smtp' ? 'selected' : '' }}>SMTP Deliverability Check</option>
+                </select>
+                {% if errors.type is defined %}
+                    <p class="mt-1 text-xs text-red-600">{{ errors.type }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label id="target-label" for="target" class="block text-sm font-semibold text-slate-700">Target URL</label>
+                <input type="text" name="target" id="target" value="{{ dto.target }}" required
+                       class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                <span id="target-help" class="text-xs text-slate-400 mt-1 block"></span>
+                {% if errors.target is defined %}
+                    <p class="mt-1 text-xs text-red-600">{{ errors.target }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="interval" class="block text-sm font-semibold text-slate-700">Check Interval (Minutes)</label>
+                <select name="interval" id="interval"
+                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                    <option value="1" {{ dto.interval == 1 ? 'selected' : '' }}>Every 1 minute</option>
+                    <option value="5" {{ dto.interval == 5 ? 'selected' : '' }}>Every 5 minutes</option>
+                    <option value="15" {{ dto.interval == 15 ? 'selected' : '' }}>Every 15 minutes</option>
+                    <option value="30" {{ dto.interval == 30 ? 'selected' : '' }}>Every 30 minutes</option>
+                    <option value="60" {{ dto.interval == 60 ? 'selected' : '' }}>Hourly</option>
+                </select>
+                {% if errors.interval is defined %}
+                    <p class="mt-1 text-xs text-red-600">{{ errors.interval }}</p>
+                {% endif %}
+            </div>
+
+            {# HTTP Specific Fields #}
+            <div id="http-fields" class="space-y-6">
+                <div class="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
+                    <div>
+                        <label for="expected_status" class="block text-sm font-semibold text-slate-700">Expected HTTP Status</label>
+                        <input type="number" name="expected_status" id="expected_status" value="{{ dto.expectedStatus }}"
+                               class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                        {% if errors.expectedStatus is defined %}
+                            <p class="mt-1 text-xs text-red-600">{{ errors.expectedStatus }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="regex_check" class="block text-sm font-semibold text-slate-700">Regex Check Pattern (Optional)</label>
+                    <input type="text" name="regex_check" id="regex_check" value="{{ dto.regexCheck }}" placeholder="/Success/"
+                           class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                    <span class="text-xs text-slate-400 mt-1 block">Verify that the response body contains a specific text pattern.</span>
+                    {% if errors.regexCheck is defined %}
+                        <p class="mt-1 text-xs text-red-600">{{ errors.regexCheck }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# SMTP Specific Fields #}
+            <div id="smtp-fields" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
+                    <div>
+                        <label for="smtp_username" class="block text-sm font-semibold text-slate-700">SMTP Username / Email</label>
+                        <input type="text" name="smtp_username" id="smtp_username" value="{{ dto.smtpUsername }}"
+                               class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                        {% if errors.smtpUsername is defined %}
+                            <p class="mt-1 text-xs text-red-600">{{ errors.smtpUsername }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="smtp_password" class="block text-sm font-semibold text-slate-700">SMTP Password</label>
+                        <input type="password" name="smtp_password" id="smtp_password"
+                               class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                        {% if errors.smtpPassword is defined %}
+                            <p class="mt-1 text-xs text-red-600">{{ errors.smtpPassword }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="smtp_secure" class="block text-sm font-semibold text-slate-700">Encryption Method</label>
+                    <select name="smtp_secure" id="smtp_secure"
+                            class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                        <option value="" {{ dto.smtpSecure == '' ? 'selected' : '' }}>Opportunistic (STARTTLS - default)</option>
+                        <option value="ssl" {{ dto.smtpSecure == 'ssl' ? 'selected' : '' }}>SSL/TLS (Port 465)</option>
+                    </select>
+                    {% if errors.smtpSecure is defined %}
+                        <p class="mt-1 text-xs text-red-600">{{ errors.smtpSecure }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="pt-4 flex justify-end gap-3 border-t border-slate-200">
+                <a href="{{ path('dashboard_index') }}" class="px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 hover:bg-slate-50">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    Save Monitor
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleTypeFields() {
+    const type = document.getElementById('type').value;
+    const httpFields = document.getElementById('http-fields');
+    const smtpFields = document.getElementById('smtp-fields');
+    const label = document.getElementById('target-label');
+    const help = document.getElementById('target-help');
+
+    if (type === 'http') {
+        httpFields.classList.remove('hidden');
+        smtpFields.classList.add('hidden');
+        label.textContent = "Target URL";
+        help.textContent = "Example: https://your-website.com/health";
+    } else {
+        httpFields.classList.add('hidden');
+        smtpFields.classList.remove('hidden');
+        label.textContent = "SMTP Server Host & Port";
+        help.textContent = "Example: smtp.postmarkapp.com:587";
+    }
+}
+// Init fields on load
+toggleTypeFields();
+</script>
+{% endblock %}

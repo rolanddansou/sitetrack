@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard - SiteTrack{% endblock %}
+
+{% block body %}
+<div class="px-4 sm:px-0 flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900">Uptime & SMTP Monitors</h1>
+        <p class="mt-1 text-sm text-slate-500">Real-time health status of your apps and transactional mail servers.</p>
+    </div>
+    <a href="{{ path('monitor_new') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none">
+        Add Monitor
+    </a>
+</div>
+
+{% if monitors is empty %}
+<div class="text-center py-12 bg-white rounded-lg border border-slate-200 shadow-sm mx-4 sm:mx-0">
+    <span class="text-4xl">📡</span>
+    <h3 class="mt-2 text-sm font-semibold text-slate-900">No monitors configured</h3>
+    <p class="mt-1 text-sm text-slate-500">Get started by creating your first health-check or SMTP monitor.</p>
+    <div class="mt-6">
+        <a href="{{ path('monitor_new') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+            Create Monitor
+        </a>
+    </div>
+</div>
+{% else %}
+<div class="bg-white shadow-sm rounded-lg border border-slate-200 overflow-hidden mx-4 sm:mx-0">
+    <ul role="list" class="divide-y divide-slate-200">
+        {% for item in monitors %}
+            {% set monitor = item.entity %}
+            {% set check = item.lastCheck %}
+            {% set smtp = item.lastSmtp %}
+
+            <li class="hover:bg-slate-50 transition-colors">
+                <a href="{{ path('monitor_show', {id: monitor.id}) }}" class="block px-6 py-4">
+                    <div class="flex items-center justify-between flex-wrap sm:flex-nowrap gap-4">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">
+                                {{ monitor.type == 'http' ? '🌐' : '📧' }}
+                            </span>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-900">{{ monitor.name }}</h4>
+                                <p class="text-xs text-slate-400 truncate max-w-md">{{ monitor.target }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-6 shrink-0">
+                            {# Response Speed #}
+                            <div class="text-right hidden sm:block">
+                                {% if monitor.type == 'http' and check %}
+                                    <span class="text-xs text-slate-400 block">Latency</span>
+                                    <span class="text-sm font-semibold text-slate-700">{{ check.responseTimeMs }} ms</span>
+                                {% elseif monitor.type == 'smtp' and smtp %}
+                                    <span class="text-xs text-slate-400 block">Delivery Speed</span>
+                                    <span class="text-sm font-semibold text-slate-700">
+                                        {% if smtp.status == 'delivered' %}
+                                            {{ smtp.delivery_time_seconds }} s
+                                        {% else %}
+                                            --
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            {# Status Badge #}
+                            <div>
+                                {% if monitor.type == 'http' %}
+                                    {% if check is null %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800">Pending</span>
+                                    {% elseif check.status == 'up' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">● UP</span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">● DOWN</span>
+                                    {% endif %}
+                                {% else %}
+                                    {% if smtp is null %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800">Pending</span>
+                                    	{% elseif smtp.status == 'delivered' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">● DELIVERED</span>
+                                    {% elseif smtp.status == 'sent' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">● SENT</span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">● FAILED</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+
+                            <svg class="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endblock %}

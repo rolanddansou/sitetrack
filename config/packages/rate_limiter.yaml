@@ -1,0 +1,6 @@
+framework:
+    rate_limiter:
+        analytics_collect:
+            policy: 'token_bucket'
+            limit: 1000
+            rate: { interval: '1 minute', amount: 1000 }
