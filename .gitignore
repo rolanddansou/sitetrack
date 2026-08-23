@@ -14,6 +14,14 @@
 /assets/vendor/
 ###< symfony/asset-mapper ###
 
+###> npm ###
+/node_modules/
+###< npm ###
+
+###> jetbrains ###
+/.idea/
+###< jetbrains ###
+
 ###> phpunit/phpunit ###
 /phpunit.xml
 /.phpunit.cache/
