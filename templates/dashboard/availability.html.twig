@@ -8,7 +8,7 @@
         <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Uptime & SMTP Monitors</h1>
         <p class="mt-1 text-sm font-body text-ink-muted">Real-time health status of your apps and transactional mail servers.</p>
     </div>
-    <a href="{{ path('monitor_new') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark focus:outline-none">
+    <a href="{{ path('workspace_monitor_new', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark focus:outline-none">
         Add Monitor
     </a>
 </div>
@@ -19,7 +19,7 @@
     <h3 class="mt-2 text-sm font-body font-semibold text-ink">No monitors configured</h3>
     <p class="mt-1 text-sm font-body text-ink-muted">Get started by creating your first health-check or SMTP monitor.</p>
     <div class="mt-6">
-        <a href="{{ path('monitor_new') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark">
+        <a href="{{ path('workspace_monitor_new', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark">
             Create Monitor
         </a>
     </div>
@@ -33,7 +33,7 @@
             {% set smtp = item.lastSmtp %}
 
             <li class="hover:bg-paper-dim transition-colors">
-                <a href="{{ path('monitor_show', {publicId: monitor.publicId}) }}" class="block px-6 py-4">
+                <a href="{{ path('workspace_monitor_show', {workspacePublicId: workspace.publicId, monitorPublicId: monitor.publicId}) }}" class="block px-6 py-4">
                     <div class="flex items-center justify-between flex-wrap sm:flex-nowrap gap-4">
                         <div class="flex items-center space-x-3">
                             <span class="w-8 h-8 border border-line text-signal flex items-center justify-center shrink-0">

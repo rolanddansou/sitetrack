@@ -90,9 +90,9 @@ class CachedMonitorRepository implements MonitorRepositoryInterface
         }
     }
 
-    public function findActiveMonitorsByTenant(int $tenantId): array
+    public function findActiveMonitorsByWorkspace(int $workspaceId): array
     {
-        $cacheKey = sprintf('active_monitors_tenant_%d', $tenantId);
+        $cacheKey = sprintf('active_monitors_workspace_%d', $workspaceId);
 
         try {
             $item = $this->cache->getItem($cacheKey);
@@ -100,16 +100,16 @@ class CachedMonitorRepository implements MonitorRepositoryInterface
                 return $item->get();
             }
 
-            $monitors = $this->delegate->findActiveMonitorsByTenant($tenantId);
+            $monitors = $this->delegate->findActiveMonitorsByWorkspace($workspaceId);
             $item->set($monitors);
             $item->expiresAfter(60); // 1 minute
             $this->cache->save($item);
             return $monitors;
         } catch (\Throwable $e) {
             if ($this->logger !== null) {
-                $this->logger->warning(sprintf('Cache failure in CachedMonitorRepository::findActiveMonitorsByTenant: %s. Falling back to database.', $e->getMessage()));
+                $this->logger->warning(sprintf('Cache failure in CachedMonitorRepository::findActiveMonitorsByWorkspace: %s. Falling back to database.', $e->getMessage()));
             }
-            return $this->delegate->findActiveMonitorsByTenant($tenantId);
+            return $this->delegate->findActiveMonitorsByWorkspace($workspaceId);
         }
     }
 
@@ -133,7 +133,7 @@ class CachedMonitorRepository implements MonitorRepositoryInterface
             }
             $this->cache->deleteItem(sprintf('monitor_public_%s', $monitor->getPublicId()));
             $this->cache->deleteItem('active_monitors');
-            $this->cache->deleteItem(sprintf('active_monitors_tenant_%d', $monitor->getTenantId()));
+            $this->cache->deleteItem(sprintf('active_monitors_workspace_%d', $monitor->getWorkspaceId()));
         } catch (\Throwable $e) {
             if ($this->logger !== null) {
                 $this->logger->warning(sprintf('Cache clearing failure in CachedMonitorRepository: %s', $e->getMessage()));

@@ -1,4 +1,4 @@
-<form method="GET" action="{{ path('analytics_index') }}" data-controller="auto-submit" class="flex items-center gap-3">
+<form method="GET" action="{{ path('workspace_analytics_index', {workspacePublicId: workspace.publicId}) }}" data-controller="auto-submit" class="flex items-center gap-3">
     <select name="period" data-action="change->auto-submit#submit"
             class="rounded-sm border-line text-sm py-2 pl-3 pr-8 focus:border-signal focus:ring-signal">
         <option value="today" {{ period == 'today' ? 'selected' : '' }}>Today</option>

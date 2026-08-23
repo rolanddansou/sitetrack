@@ -5,7 +5,7 @@
 {% block body %}
 <div class="max-w-2xl mx-auto px-4 sm:px-0">
     <div class="mb-6">
-        <a href="{{ path('availability_index') }}" class="text-xs text-signal hover:text-signal-dark flex items-center gap-1 mb-2">
+        <a href="{{ path('workspace_availability_index', {workspacePublicId: workspace.publicId}) }}" class="text-xs text-signal hover:text-signal-dark flex items-center gap-1 mb-2">
             &larr; Back to Dashboard
         </a>
         <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Create a New Monitor</h1>
@@ -13,7 +13,7 @@
     </div>
 
     <div class="bg-white border border-line p-6">
-        <form method="POST" action="{{ path('monitor_new') }}" class="space-y-6" data-controller="monitor-type">
+        <form method="POST" action="{{ path('workspace_monitor_new', {workspacePublicId: workspace.publicId}) }}" class="space-y-6" data-controller="monitor-type">
             <div>
                 <label for="name" class="block text-sm font-body font-semibold text-ink">Monitor Name</label>
                 <input type="text" name="name" id="name" value="{{ dto.name }}" required
@@ -120,7 +120,7 @@
             </div>
 
             <div class="pt-4 flex justify-end gap-3 border-t border-line">
-                <a href="{{ path('availability_index') }}" class="px-4 py-2 border border-ink/20 text-sm font-body font-medium rounded-sm text-ink hover:border-ink/40">
+                <a href="{{ path('workspace_availability_index', {workspacePublicId: workspace.publicId}) }}" class="px-4 py-2 border border-ink/20 text-sm font-body font-medium rounded-sm text-ink hover:border-ink/40">
                     Cancel
                 </a>
                 <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-medium rounded-sm text-paper bg-signal hover:bg-signal-dark">

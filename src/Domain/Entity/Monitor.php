@@ -10,7 +10,7 @@ class Monitor
 {
     private ?int $id = null;
     private string $publicId;
-    private int $tenantId;
+    private int $workspaceId;
     private string $name;
     private string $type; // 'http' or 'smtp'
     private string $target;
@@ -24,14 +24,14 @@ class Monitor
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct(
-        int $tenantId,
+        int $workspaceId,
         string $name,
         string $type,
         string $target,
         int $interval = 5
     ) {
         $this->publicId = Uuid::v4()->toRfc4122();
-        $this->tenantId = $tenantId;
+        $this->workspaceId = $workspaceId;
         $this->name = $name;
         $this->type = $type;
         $this->target = $target;
@@ -55,9 +55,9 @@ class Monitor
         return $this->publicId;
     }
 
-    public function getTenantId(): int
+    public function getWorkspaceId(): int
     {
-        return $this->tenantId;
+        return $this->workspaceId;
     }
 
     public function getName(): string

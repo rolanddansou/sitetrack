@@ -8,13 +8,13 @@ use App\Domain\DTO\AlertRuleInputDto;
 use App\Domain\DTO\MonitorInputDto;
 use App\Domain\Entity\AlertRule;
 use App\Domain\Entity\Monitor;
+use App\Domain\Entity\Workspace;
 use App\Domain\Repository\AlertRuleRepositoryInterface;
 use App\Domain\Repository\CheckResultRepositoryInterface;
 use App\Domain\Repository\MonitorRepositoryInterface;
 use App\Domain\Repository\SmtpTestRepositoryInterface;
+use App\Domain\Repository\WorkspaceRepositoryInterface;
 use App\Domain\Service\PasswordEncryptorInterface;
-use App\Infrastructure\Security\CurrentTenantResolver;
-use App\Infrastructure\Security\MonitorVoter;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -30,16 +30,16 @@ class DashboardController extends AbstractController
         private CheckResultRepositoryInterface $checkResultRepository,
         private SmtpTestRepositoryInterface $smtpTestRepository,
         private AlertRuleRepositoryInterface $alertRuleRepository,
-        private CurrentTenantResolver $currentTenantResolver,
+        private WorkspaceRepositoryInterface $workspaceRepository,
         private PasswordEncryptorInterface $passwordEncryptor,
         private ValidatorInterface $validator,
         private Connection $connection
     ) {}
 
-    #[Route('/dashboard/availability', name: 'availability_index')]
-    public function availability(): Response
+    #[Route('/workspace/{workspacePublicId}/availability', name: 'workspace_availability_index')]
+    public function availability(Workspace $workspace): Response
     {
-        $monitors = $this->monitorRepository->findActiveMonitorsByTenant($this->currentTenantResolver->resolve());
+        $monitors = $this->monitorRepository->findActiveMonitorsByWorkspace($workspace->getId());
         $monitorData = [];
 
         foreach ($monitors as $monitor) {
@@ -68,12 +68,14 @@ class DashboardController extends AbstractController
         }
 
         return $this->render('dashboard/availability.html.twig', [
+            'workspace' => $workspace,
+            'workspaces' => $this->workspaceRepository->findByTenant($workspace->getTenantId()),
             'monitors' => $monitorData,
         ]);
     }
 
-    #[Route('/monitor/new', name: 'monitor_new', methods: ['GET', 'POST'])]
-    public function new(Request $request): Response
+    #[Route('/workspace/{workspacePublicId}/monitor/new', name: 'workspace_monitor_new', methods: ['GET', 'POST'])]
+    public function new(Workspace $workspace, Request $request): Response
     {
         $dto = new MonitorInputDto();
         $errors = [];
@@ -96,7 +98,7 @@ class DashboardController extends AbstractController
                 }
             } else {
                 $monitor = new Monitor(
-                    tenantId: $this->currentTenantResolver->resolve(),
+                    workspaceId: $workspace->getId(),
                     name: $dto->name,
                     type: $dto->type,
                     target: $dto->target,
@@ -116,24 +118,22 @@ class DashboardController extends AbstractController
 
                 $this->monitorRepository->save($monitor);
                 $this->addFlash('success', 'Monitor created successfully.');
-                return $this->redirectToRoute('availability_index');
+                return $this->redirectToRoute('workspace_availability_index', ['workspacePublicId' => $workspace->getPublicId()]);
             }
         }
 
         return $this->render('dashboard/new.html.twig', [
+            'workspace' => $workspace,
+            'workspaces' => $this->workspaceRepository->findByTenant($workspace->getTenantId()),
             'dto' => $dto,
             'errors' => $errors,
         ]);
     }
 
-    #[Route('/monitor/{publicId}', name: 'monitor_show', methods: ['GET'])]
-    public function show(string $publicId): Response
+    #[Route('/workspace/{workspacePublicId}/monitor/{monitorPublicId}', name: 'workspace_monitor_show', methods: ['GET'])]
+    public function show(Workspace $workspace, string $monitorPublicId): Response
     {
-        $monitor = $this->monitorRepository->findByPublicId($publicId);
-        if ($monitor === null) {
-            throw $this->createNotFoundException('Monitor not found');
-        }
-        $this->denyAccessUnlessGranted(MonitorVoter::MONITOR_ACCESS, $monitor);
+        $monitor = $this->findMonitorInWorkspace($workspace, $monitorPublicId);
 
         $id = $monitor->getId();
         $recentChecks = $this->checkResultRepository->findRecentResults($id, 50);
@@ -164,6 +164,8 @@ class DashboardController extends AbstractController
             ->fetchAllAssociative();
 
         return $this->render('dashboard/show.html.twig', [
+            'workspace' => $workspace,
+            'workspaces' => $this->workspaceRepository->findByTenant($workspace->getTenantId()),
             'monitor' => $monitor,
             'recentChecks' => $recentChecks,
             'smtpTests' => $smtpTests,
@@ -172,26 +174,21 @@ class DashboardController extends AbstractController
         ]);
     }
 
-    #[Route('/monitor/{publicId}/delete', name: 'monitor_delete', methods: ['POST'])]
-    public function delete(string $publicId): RedirectResponse
+    #[Route('/workspace/{workspacePublicId}/monitor/{monitorPublicId}/delete', name: 'workspace_monitor_delete', methods: ['POST'])]
+    public function delete(Workspace $workspace, string $monitorPublicId): RedirectResponse
     {
-        $monitor = $this->monitorRepository->findByPublicId($publicId);
-        if ($monitor !== null) {
-            $this->denyAccessUnlessGranted(MonitorVoter::MONITOR_ACCESS, $monitor);
+        $monitor = $this->monitorRepository->findByPublicId($monitorPublicId);
+        if ($monitor !== null && $monitor->getWorkspaceId() === $workspace->getId()) {
             $this->monitorRepository->delete($monitor);
             $this->addFlash('success', 'Monitor deleted successfully.');
         }
-        return $this->redirectToRoute('availability_index');
+        return $this->redirectToRoute('workspace_availability_index', ['workspacePublicId' => $workspace->getPublicId()]);
     }
 
-    #[Route('/monitor/{publicId}/rule/new', name: 'rule_new', methods: ['POST'])]
-    public function newRule(string $publicId, Request $request): RedirectResponse
+    #[Route('/workspace/{workspacePublicId}/monitor/{monitorPublicId}/rule/new', name: 'workspace_rule_new', methods: ['POST'])]
+    public function newRule(Workspace $workspace, string $monitorPublicId, Request $request): RedirectResponse
     {
-        $monitor = $this->monitorRepository->findByPublicId($publicId);
-        if ($monitor === null) {
-            throw $this->createNotFoundException('Monitor not found');
-        }
-        $this->denyAccessUnlessGranted(MonitorVoter::MONITOR_ACCESS, $monitor);
+        $monitor = $this->findMonitorInWorkspace($workspace, $monitorPublicId);
 
         $dto = new AlertRuleInputDto();
         $dto->conditionType = (string) $request->request->get('condition_type');
@@ -216,6 +213,23 @@ class DashboardController extends AbstractController
             $this->addFlash('success', 'Alert rule added.');
         }
 
-        return $this->redirectToRoute('monitor_show', ['publicId' => $publicId]);
+        return $this->redirectToRoute('workspace_monitor_show', ['workspacePublicId' => $workspace->getPublicId(), 'monitorPublicId' => $monitorPublicId]);
+    }
+
+    /**
+     * A monitor that exists but belongs to a different workspace under the
+     * same (or another) tenant is treated as not found rather than
+     * forbidden — WorkspaceValueResolver already guarantees the caller has
+     * access to $workspace itself, so a mismatched monitor is indistinguishable
+     * from "doesn't exist" here, and 404 avoids confirming it exists elsewhere.
+     */
+    private function findMonitorInWorkspace(Workspace $workspace, string $monitorPublicId): Monitor
+    {
+        $monitor = $this->monitorRepository->findByPublicId($monitorPublicId);
+        if ($monitor === null || $monitor->getWorkspaceId() !== $workspace->getId()) {
+            throw $this->createNotFoundException('Monitor not found');
+        }
+
+        return $monitor;
     }
 }

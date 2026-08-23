@@ -4,21 +4,17 @@
                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
                                       https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
 
-    <entity name="App\Domain\Entity\Monitor" table="monitors">
+    <entity name="App\Domain\Entity\Workspace" table="workspaces">
+        <indexes>
+            <index columns="tenant_id" name="idx_workspaces_tenant"/>
+        </indexes>
         <id name="id" type="integer">
             <generator strategy="AUTO"/>
         </id>
         <field name="publicId" type="string" length="36" column="public_id" unique="true"/>
-        <field name="workspaceId" type="integer" column="workspace_id"/>
+        <field name="tenantId" type="integer" column="tenant_id"/>
         <field name="name" type="string" length="255"/>
-        <field name="type" type="string" length="50"/>
-        <field name="target" type="string" length="255"/>
-        <field name="interval" type="integer" column="`interval`"/>
-        <field name="expectedStatus" type="integer" column="expected_status" nullable="true"/>
-        <field name="regexCheck" type="string" length="255" column="regex_check" nullable="true"/>
-        <field name="smtpUsername" type="string" length="255" column="smtp_username" nullable="true"/>
-        <field name="smtpPasswordEncrypted" type="text" column="smtp_password_encrypted" nullable="true"/>
-        <field name="smtpSecure" type="string" length="50" column="smtp_secure" nullable="true"/>
+        <field name="siteId" type="string" length="32" column="site_id" unique="true"/>
         <field name="createdAt" type="datetime_immutable" column="created_at"/>
         <field name="updatedAt" type="datetime_immutable" column="updated_at" nullable="true"/>
     </entity>

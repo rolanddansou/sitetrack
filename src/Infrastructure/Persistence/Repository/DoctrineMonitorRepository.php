@@ -31,13 +31,13 @@ class DoctrineMonitorRepository implements MonitorRepositoryInterface
             ->getResult();
     }
 
-    public function findActiveMonitorsByTenant(int $tenantId): array
+    public function findActiveMonitorsByWorkspace(int $workspaceId): array
     {
         return $this->entityManager->createQueryBuilder()
             ->select('m')
             ->from(Monitor::class, 'm')
-            ->where('m.tenantId = :tenantId')
-            ->setParameter('tenantId', $tenantId)
+            ->where('m.workspaceId = :workspaceId')
+            ->setParameter('workspaceId', $workspaceId)
             ->getQuery()
             ->getResult();
     }

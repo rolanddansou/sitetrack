@@ -4,19 +4,24 @@ declare(strict_types=1);
 
 namespace App\Domain\Entity;
 
-class Tenant
+use Symfony\Component\Uid\Uuid;
+
+class Workspace
 {
     private ?int $id = null;
+    private string $publicId;
+    private int $tenantId;
     private string $name;
-    private string $slug;
-    private bool $isActive = true;
+    private string $siteId;
     private \DateTimeImmutable $createdAt;
     private ?\DateTimeImmutable $updatedAt = null;
 
-    public function __construct(string $name, string $slug)
+    public function __construct(int $tenantId, string $name)
     {
+        $this->publicId = Uuid::v4()->toRfc4122();
+        $this->tenantId = $tenantId;
         $this->name = $name;
-        $this->slug = $slug;
+        $this->siteId = bin2hex(random_bytes(8));
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -31,6 +36,16 @@ class Tenant
         return $this;
     }
 
+    public function getPublicId(): string
+    {
+        return $this->publicId;
+    }
+
+    public function getTenantId(): int
+    {
+        return $this->tenantId;
+    }
+
     public function getName(): string
     {
         return $this->name;
@@ -42,26 +57,9 @@ class Tenant
         return $this;
     }
 
-    public function getSlug(): string
+    public function getSiteId(): string
     {
-        return $this->slug;
-    }
-
-    public function setSlug(string $slug): self
-    {
-        $this->slug = $slug;
-        return $this;
-    }
-
-    public function isActive(): bool
-    {
-        return $this->isActive;
-    }
-
-    public function setActive(bool $isActive): self
-    {
-        $this->isActive = $isActive;
-        return $this;
+        return $this->siteId;
     }
 
     public function getCreatedAt(): \DateTimeImmutable

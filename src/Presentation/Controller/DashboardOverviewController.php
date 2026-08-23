@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Presentation\Controller;
 
+use App\Domain\Entity\Workspace;
 use App\Domain\Repository\CheckResultRepositoryInterface;
 use App\Domain\Repository\MonitorRepositoryInterface;
-use App\Domain\Repository\TenantRepositoryInterface;
+use App\Domain\Repository\WorkspaceRepositoryInterface;
 use App\Infrastructure\Activity\RecentActivityProvider;
 use App\Infrastructure\Analytics\AnalyticsQueryService;
 use App\Infrastructure\Analytics\LiveGlobeProvider;
@@ -14,30 +15,43 @@ use App\Infrastructure\Security\CurrentTenantResolver;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 class DashboardOverviewController extends AbstractController
 {
     public function __construct(
-        private CurrentTenantResolver $currentTenantResolver,
-        private TenantRepositoryInterface $tenantRepository,
+        private WorkspaceRepositoryInterface $workspaceRepository,
         private MonitorRepositoryInterface $monitorRepository,
         private CheckResultRepositoryInterface $checkResultRepository,
         private RecentActivityProvider $recentActivityProvider,
         private AnalyticsQueryService $analyticsQuery,
         private LiveGlobeProvider $liveGlobeProvider,
-        private Connection $connection
+        private Connection $connection,
+        private CurrentTenantResolver $currentTenantResolver
     ) {}
 
+    /**
+     * A workspace-agnostic entry point (linked from the homepage's "Go to
+     * dashboard" CTA, which has no workspace in context) that redirects to
+     * the current tenant's first workspace.
+     */
     #[Route('/dashboard', name: 'dashboard_index', methods: ['GET'])]
-    public function index(): Response
+    public function redirectToDefaultWorkspace(): RedirectResponse
     {
-        $tenant = $this->tenantRepository->find($this->currentTenantResolver->resolve());
-        if ($tenant === null) {
-            throw $this->createNotFoundException('Tenant not found');
+        $workspaces = $this->workspaceRepository->findByTenant($this->currentTenantResolver->resolve());
+        if (count($workspaces) === 0) {
+            return $this->redirectToRoute('workspace_new');
         }
-        $siteId = $tenant->getSiteId();
+
+        return $this->redirectToRoute('workspace_dashboard_index', ['workspacePublicId' => $workspaces[0]->getPublicId()]);
+    }
+
+    #[Route('/workspace/{workspacePublicId}/dashboard', name: 'workspace_dashboard_index', methods: ['GET'])]
+    public function index(Workspace $workspace): Response
+    {
+        $siteId = $workspace->getSiteId();
 
         $allTimeVisits = $this->analyticsQuery->getAllTimeVisits($siteId);
         // Unresolved GeoIP groups into its own "country" row (label === null) —
@@ -49,9 +63,11 @@ class DashboardOverviewController extends AbstractController
         ));
 
         return $this->render('dashboard/overview.html.twig', [
-            'monitorSummary' => $this->buildMonitorSummary($tenant->getId() ?? 0),
+            'workspace' => $workspace,
+            'workspaces' => $this->workspaceRepository->findByTenant($workspace->getTenantId()),
+            'monitorSummary' => $this->buildMonitorSummary($workspace->getId() ?? 0),
             'analyticsSummary' => $this->buildAnalyticsSummary($siteId),
-            'recentActivity' => $this->buildRecentActivity($tenant->getId() ?? 0),
+            'recentActivity' => $this->buildRecentActivity($workspace->getId() ?? 0),
             'liveGlobe' => $this->buildLiveGlobePayload($siteId),
             'allTimeVisits' => $allTimeVisits['total'],
             'visitsSince' => $allTimeVisits['since'],
@@ -59,15 +75,10 @@ class DashboardOverviewController extends AbstractController
         ]);
     }
 
-    #[Route('/dashboard/live-globe', name: 'dashboard_live_globe', methods: ['GET'])]
-    public function liveGlobe(): JsonResponse
+    #[Route('/workspace/{workspacePublicId}/dashboard/live-globe', name: 'workspace_dashboard_live_globe', methods: ['GET'])]
+    public function liveGlobe(Workspace $workspace): JsonResponse
     {
-        $tenant = $this->tenantRepository->find($this->currentTenantResolver->resolve());
-        if ($tenant === null) {
-            throw $this->createNotFoundException('Tenant not found');
-        }
-
-        return new JsonResponse($this->buildLiveGlobePayload($tenant->getSiteId()));
+        return new JsonResponse($this->buildLiveGlobePayload($workspace->getSiteId()));
     }
 
     /**
@@ -98,14 +109,14 @@ class DashboardOverviewController extends AbstractController
     /**
      * @return array<int, array{monitorName: string, monitorPublicId: string, status: string, relativeTime: string}>
      */
-    private function buildRecentActivity(int $tenantId): array
+    private function buildRecentActivity(int $workspaceId): array
     {
         return array_map(fn (array $item): array => [
             'monitorName' => $item['monitorName'],
             'monitorPublicId' => $item['monitorPublicId'],
             'status' => $item['status'],
             'relativeTime' => $this->formatRelativeTime($item['occurredAt']),
-        ], $this->recentActivityProvider->getRecentActivity($tenantId));
+        ], $this->recentActivityProvider->getRecentActivity($workspaceId));
     }
 
     private function formatRelativeTime(\DateTimeImmutable $time): string
@@ -128,11 +139,11 @@ class DashboardOverviewController extends AbstractController
     /**
      * @return array{up: int, down: int, pending: int, total: int}
      */
-    private function buildMonitorSummary(int $tenantId): array
+    private function buildMonitorSummary(int $workspaceId): array
     {
         $summary = ['up' => 0, 'down' => 0, 'pending' => 0, 'total' => 0];
 
-        foreach ($this->monitorRepository->findActiveMonitorsByTenant($tenantId) as $monitor) {
+        foreach ($this->monitorRepository->findActiveMonitorsByWorkspace($workspaceId) as $monitor) {
             $summary['total']++;
             $summary[$this->resolveMonitorStatus($monitor->getId() ?? 0, $monitor->getType())]++;
         }

@@ -8,10 +8,12 @@ use App\Domain\Entity\Identity;
 use App\Domain\Entity\Tenant;
 use App\Domain\Entity\TenantMembership;
 use App\Domain\Entity\UserCredentials;
+use App\Domain\Entity\Workspace;
 use App\Domain\Repository\IdentityRepositoryInterface;
 use App\Domain\Repository\TenantMembershipRepositoryInterface;
 use App\Domain\Repository\TenantRepositoryInterface;
 use App\Domain\Repository\UserCredentialsRepositoryInterface;
+use App\Domain\Repository\WorkspaceRepositoryInterface;
 use App\Domain\Service\PasswordHasherInterface;
 use App\Infrastructure\Security\IdentityUser;
 use Doctrine\DBAL\Connection;
@@ -22,11 +24,13 @@ class AnalyticsControllerTest extends WebTestCase
 {
     private ?Connection $connection = null;
     private string $siteId = '';
+    private string $workspacePublicId = '';
 
     protected function tearDown(): void
     {
         if ($this->connection !== null) {
             $this->connection->executeStatement('DELETE FROM analytics_events');
+            $this->connection->executeStatement('DELETE FROM workspaces');
             $this->connection->executeStatement('DELETE FROM tenant_memberships');
             $this->connection->executeStatement('DELETE FROM tenants');
             $this->connection->executeStatement('DELETE FROM user_credentials');
@@ -45,11 +49,11 @@ class AnalyticsControllerTest extends WebTestCase
         $identityRepo = $container->get(IdentityRepositoryInterface::class);
         $credentialsRepo = $container->get(UserCredentialsRepositoryInterface::class);
         $membershipRepo = $container->get(TenantMembershipRepositoryInterface::class);
+        $workspaceRepo = $container->get(WorkspaceRepositoryInterface::class);
         $hasher = $container->get(PasswordHasherInterface::class);
 
         $tenant = new Tenant('Test Tenant', 'test-tenant');
         $tenantRepo->save($tenant);
-        $this->siteId = $tenant->getSiteId();
 
         $identity = new Identity('user@example.test');
         $identityRepo->save($identity);
@@ -58,6 +62,11 @@ class AnalyticsControllerTest extends WebTestCase
         $credentialsRepo->save($credentials);
 
         $membershipRepo->save(new TenantMembership($tenant->getId(), $identity->getId(), 'owner'));
+
+        $workspace = new Workspace($tenant->getId(), 'Default');
+        $workspaceRepo->save($workspace);
+        $this->workspacePublicId = $workspace->getPublicId();
+        $this->siteId = $workspace->getSiteId();
 
         return new IdentityUser($identity, $credentials);
     }
@@ -75,7 +84,7 @@ class AnalyticsControllerTest extends WebTestCase
         ], $overrides));
     }
 
-    public function testAnalyticsPageShowsTenantSiteIdAndOwnEventsOnly(): void
+    public function testAnalyticsPageShowsWorkspaceSiteIdAndOwnEventsOnly(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createLoggedInUser($client));
@@ -84,7 +93,7 @@ class AnalyticsControllerTest extends WebTestCase
         // A different site's event must not leak into these counts.
         $this->insertEvent(['site_id' => 'someone-elses-site', 'session_id' => 'session-b']);
 
-        $crawler = $client->request('GET', '/analytics');
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/analytics');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('code', $this->siteId);
@@ -103,7 +112,7 @@ class AnalyticsControllerTest extends WebTestCase
             'occurred_at' => (new \DateTimeImmutable('-10 days'))->format('Y-m-d H:i:s'),
         ]);
 
-        $crawler = $client->request('GET', '/analytics?period=today');
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/analytics?period=today');
 
         $this->assertResponseIsSuccessful();
         $this->assertSame('1', trim($crawler->filter('[data-kpi="pageviews"] p.text-2xl')->text()));
@@ -117,7 +126,7 @@ class AnalyticsControllerTest extends WebTestCase
         $this->insertEvent(['session_id' => 'session-a', 'event_type' => 'pageview']);
         $this->insertEvent(['session_id' => 'session-b', 'event_type' => 'event']);
 
-        $crawler = $client->request('GET', '/analytics');
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/analytics');
 
         $this->assertResponseIsSuccessful();
         $this->assertSame('1', trim($crawler->filter('[data-kpi="visitors"] p.text-2xl')->text()));
@@ -136,7 +145,7 @@ class AnalyticsControllerTest extends WebTestCase
         $this->insertEvent(['session_id' => 'session-b', 'occurred_at' => (new \DateTimeImmutable('-3 minutes'))->format('Y-m-d H:i:s')]);
         $this->insertEvent(['session_id' => 'session-b', 'occurred_at' => (new \DateTimeImmutable('-1 minute'))->format('Y-m-d H:i:s')]);
 
-        $crawler = $client->request('GET', '/analytics');
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/analytics');
 
         $this->assertResponseIsSuccessful();
         $this->assertSame('50%', trim($crawler->filter('[data-kpi="bounce-rate"] p.text-2xl')->text()));
@@ -153,7 +162,7 @@ class AnalyticsControllerTest extends WebTestCase
             'occurred_at' => (new \DateTimeImmutable('-10 minutes'))->format('Y-m-d H:i:s'),
         ]);
 
-        $client->request('GET', '/analytics/online-now');
+        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/analytics/online-now');
 
         $this->assertResponseIsSuccessful();
         $this->assertJsonStringEqualsJsonString('{"count":1}', $client->getResponse()->getContent());

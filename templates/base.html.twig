@@ -19,21 +19,48 @@
                         <div class="flex-shrink-0 flex items-center">
                             {{ m.brand_mark() }}
                         </div>
-                        <nav class="ml-6 flex space-x-8">
-                            <a href="{{ path('dashboard_index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') == 'dashboard_index' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
-                                Dashboard
-                            </a>
-                            <a href="{{ path('availability_index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'availability' or app.request.attributes.get('_route') starts with 'monitor' or app.request.attributes.get('_route') == 'rule_new' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
-                                Disponibilité
-                            </a>
-                            <a href="{{ path('analytics_index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'analytics' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
-                                Analytics
-                            </a>
-                        </nav>
+                        {% if workspace is defined and workspace %}
+                            <nav class="ml-6 flex space-x-8">
+                                <a href="{{ path('workspace_dashboard_index', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') == 'workspace_dashboard_index' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
+                                    Dashboard
+                                </a>
+                                <a href="{{ path('workspace_availability_index', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'workspace_availability' or app.request.attributes.get('_route') starts with 'workspace_monitor' or app.request.attributes.get('_route') == 'workspace_rule_new' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
+                                    Disponibilité
+                                </a>
+                                <a href="{{ path('workspace_analytics_index', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'workspace_analytics' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
+                                    Analytics
+                                </a>
+                            </nav>
+                        {% endif %}
                     </div>
                     {% if app.user %}
-                        <div class="flex items-center">
-                            <span class="font-mono text-xs text-ink-muted mr-4">{{ app.user.userIdentifier }}</span>
+                        <div class="flex items-center gap-4">
+                            {% if workspace is defined and workspace %}
+                                <div class="relative" data-controller="dropdown">
+                                    <button type="button" data-action="click->dropdown#toggle" data-dropdown-target="button"
+                                            class="flex items-center gap-1 text-sm font-medium text-ink-muted hover:text-ink border border-line px-3 py-1.5 rounded-sm">
+                                        <span class="font-mono">{{ workspace.name }}</span>
+                                        {{ ux_icon('heroicons:chevron-down', {class: 'w-4 h-4'}) }}
+                                    </button>
+                                    <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-56 bg-white border border-line shadow-lg z-10">
+                                        <ul class="py-1">
+                                            {% for ws in workspaces|default([]) %}
+                                                <li>
+                                                    <a href="{{ path('workspace_dashboard_index', {workspacePublicId: ws.publicId}) }}"
+                                                       class="block px-4 py-2 text-sm {{ ws.publicId == workspace.publicId ? 'text-signal-dark font-semibold' : 'text-ink hover:bg-paper-dim' }}">
+                                                        {{ ws.name }}
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="border-t border-line py-1">
+                                            <a href="{{ path('workspace_edit', {workspacePublicId: workspace.publicId}) }}" class="block px-4 py-2 text-sm text-ink-muted hover:bg-paper-dim">Rename this workspace</a>
+                                            <a href="{{ path('workspace_new') }}" class="block px-4 py-2 text-sm text-signal hover:bg-paper-dim">+ Create workspace</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <span class="font-mono text-xs text-ink-muted">{{ app.user.userIdentifier }}</span>
                             <a href="{{ path('app_logout') }}" class="text-sm font-medium text-ink-muted hover:text-ink">Log out</a>
                         </div>
                     {% endif %}

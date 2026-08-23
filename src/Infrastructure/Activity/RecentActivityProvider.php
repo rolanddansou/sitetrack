@@ -11,7 +11,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Feeds the dashboard's "recent activity" list — monitor status changes
  * (alert triggered/resolved), most recent first, across every monitor a
- * tenant owns.
+ * workspace owns.
  *
  * Cache-aside with a short TTL: there's no write path through this class to
  * hook a cache-clear into (alert_events is written by the check use cases,
@@ -34,9 +34,9 @@ class RecentActivityProvider
     /**
      * @return array<int, array{monitorName: string, monitorPublicId: string, status: string, occurredAt: \DateTimeImmutable}>
      */
-    public function getRecentActivity(int $tenantId): array
+    public function getRecentActivity(int $workspaceId): array
     {
-        $cacheKey = sprintf('recent_activity_tenant_%d', $tenantId);
+        $cacheKey = sprintf('recent_activity_workspace_%d', $workspaceId);
 
         try {
             $item = $this->cache->getItem($cacheKey);
@@ -44,7 +44,7 @@ class RecentActivityProvider
                 return $item->get();
             }
 
-            $activity = $this->fetchFromDatabase($tenantId);
+            $activity = $this->fetchFromDatabase($workspaceId);
             $item->set($activity);
             $item->expiresAfter(self::CACHE_TTL_SECONDS);
             $this->cache->save($item);
@@ -54,14 +54,14 @@ class RecentActivityProvider
             if ($this->logger !== null) {
                 $this->logger->warning(sprintf('Cache failure in RecentActivityProvider::getRecentActivity: %s. Falling back to database.', $e->getMessage()));
             }
-            return $this->fetchFromDatabase($tenantId);
+            return $this->fetchFromDatabase($workspaceId);
         }
     }
 
     /**
      * @return array<int, array{monitorName: string, monitorPublicId: string, status: string, occurredAt: \DateTimeImmutable}>
      */
-    private function fetchFromDatabase(int $tenantId): array
+    private function fetchFromDatabase(int $workspaceId): array
     {
         $rows = $this->connection->executeQuery(
             'SELECT m.name AS monitor_name, m.public_id AS monitor_public_id, e.status,
@@ -69,10 +69,10 @@ class RecentActivityProvider
              FROM alert_events e
              JOIN alert_rules r ON e.rule_id = r.id
              JOIN monitors m ON r.monitor_id = m.id
-             WHERE m.tenant_id = :tenantId
+             WHERE m.workspace_id = :workspaceId
              ORDER BY occurred_at DESC
              LIMIT ' . self::LIMIT,
-            ['tenantId' => $tenantId]
+            ['workspaceId' => $workspaceId]
         )->fetchAllAssociative();
 
         return array_map(static fn (array $row): array => [

@@ -11,7 +11,7 @@ class MonitorDto
     public function __construct(
         public readonly ?int $id,
         public readonly string $publicId,
-        public readonly int $tenantId,
+        public readonly int $workspaceId,
         public readonly string $name,
         public readonly string $type,
         public readonly string $target,
@@ -30,7 +30,7 @@ class MonitorDto
         return new self(
             $entity->getId(),
             $entity->getPublicId(),
-            $entity->getTenantId(),
+            $entity->getWorkspaceId(),
             $entity->getName(),
             $entity->getType(),
             $entity->getTarget(),

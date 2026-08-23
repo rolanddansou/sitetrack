@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Presentation\Controller;
 
-use App\Domain\Repository\TenantRepositoryInterface;
+use App\Domain\Entity\Workspace;
+use App\Domain\Repository\WorkspaceRepositoryInterface;
 use App\Infrastructure\Analytics\AnalyticsQueryService;
 use App\Infrastructure\Analytics\ChannelClassifier;
-use App\Infrastructure\Security\CurrentTenantResolver;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
@@ -35,21 +35,16 @@ class AnalyticsController extends AbstractController
     ];
 
     public function __construct(
-        private CurrentTenantResolver $currentTenantResolver,
-        private TenantRepositoryInterface $tenantRepository,
+        private WorkspaceRepositoryInterface $workspaceRepository,
         private Connection $connection,
         private ChannelClassifier $channelClassifier,
         private AnalyticsQueryService $analyticsQuery
     ) {}
 
-    #[Route('/analytics', name: 'analytics_index', methods: ['GET'])]
-    public function index(Request $request): Response
+    #[Route('/workspace/{workspacePublicId}/analytics', name: 'workspace_analytics_index', methods: ['GET'])]
+    public function index(Workspace $workspace, Request $request): Response
     {
-        $tenant = $this->tenantRepository->find($this->currentTenantResolver->resolve());
-        if ($tenant === null) {
-            throw $this->createNotFoundException('Tenant not found');
-        }
-        $siteId = $tenant->getSiteId();
+        $siteId = $workspace->getSiteId();
 
         $period = $this->resolvePeriod((string) $request->query->get('period', ''));
         $granularity = $this->resolveGranularity($period, (string) $request->query->get('granularity', ''));
@@ -64,6 +59,8 @@ class AnalyticsController extends AbstractController
         $prevUniqueVisitors = $this->analyticsQuery->countUniqueVisitors($siteId, $prevStart, $prevEnd);
 
         return $this->render('dashboard/analytics.html.twig', [
+            'workspace' => $workspace,
+            'workspaces' => $this->workspaceRepository->findByTenant($workspace->getTenantId()),
             'siteId' => $siteId,
             'period' => $period,
             'granularity' => $granularity,
@@ -91,15 +88,10 @@ class AnalyticsController extends AbstractController
         ]);
     }
 
-    #[Route('/analytics/online-now', name: 'analytics_online_now', methods: ['GET'])]
-    public function onlineNow(): JsonResponse
+    #[Route('/workspace/{workspacePublicId}/analytics/online-now', name: 'workspace_analytics_online_now', methods: ['GET'])]
+    public function onlineNow(Workspace $workspace): JsonResponse
     {
-        $tenant = $this->tenantRepository->find($this->currentTenantResolver->resolve());
-        if ($tenant === null) {
-            throw $this->createNotFoundException('Tenant not found');
-        }
-
-        return new JsonResponse(['count' => $this->analyticsQuery->countOnlineNow($tenant->getSiteId())]);
+        return new JsonResponse(['count' => $this->analyticsQuery->countOnlineNow($workspace->getSiteId())]);
     }
 
     private function resolvePeriod(string $period): string

@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Controller;
 
 use App\Domain\Entity\Identity;
-use App\Domain\Entity\Monitor;
 use App\Domain\Entity\Tenant;
 use App\Domain\Entity\TenantMembership;
 use App\Domain\Entity\UserCredentials;
 use App\Domain\Entity\Workspace;
 use App\Domain\Repository\IdentityRepositoryInterface;
-use App\Domain\Repository\MonitorRepositoryInterface;
 use App\Domain\Repository\TenantMembershipRepositoryInterface;
 use App\Domain\Repository\TenantRepositoryInterface;
 use App\Domain\Repository\UserCredentialsRepositoryInterface;
@@ -22,17 +20,15 @@ use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class DashboardControllerTest extends WebTestCase
+class WorkspaceControllerTest extends WebTestCase
 {
     private ?Connection $connection = null;
+    private int $tenantId = 0;
     private string $workspacePublicId = '';
-    private int $workspaceId = 0;
 
     protected function tearDown(): void
     {
         if ($this->connection !== null) {
-            $this->connection->executeStatement('DELETE FROM analytics_events');
-            $this->connection->executeStatement('DELETE FROM monitors');
             $this->connection->executeStatement('DELETE FROM workspaces');
             $this->connection->executeStatement('DELETE FROM tenant_memberships');
             $this->connection->executeStatement('DELETE FROM tenants');
@@ -57,6 +53,7 @@ class DashboardControllerTest extends WebTestCase
 
         $tenant = new Tenant('Test Tenant', 'test-tenant');
         $tenantRepo->save($tenant);
+        $this->tenantId = $tenant->getId();
 
         $identity = new Identity('user@example.test');
         $identityRepo->save($identity);
@@ -69,32 +66,55 @@ class DashboardControllerTest extends WebTestCase
         $workspace = new Workspace($tenant->getId(), 'Default');
         $workspaceRepo->save($workspace);
         $this->workspacePublicId = $workspace->getPublicId();
-        $this->workspaceId = $workspace->getId();
 
         return new IdentityUser($identity, $credentials);
     }
 
-    public function testAvailabilityPageLoads(): void
+    public function testCreatingAWorkspaceRedirectsToItsDashboard(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createLoggedInUser($client));
 
-        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/availability');
+        $client->request('POST', '/workspace/new', ['name' => 'Marketing Site']);
 
+        $this->assertResponseRedirects();
+        $client->followRedirect();
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('h1', 'Uptime & SMTP Monitors');
-        $this->assertSelectorTextContains('h3', 'No monitors configured');
+        $this->assertSelectorTextContains('body', 'Marketing Site');
+
+        $workspaceRepo = static::getContainer()->get(WorkspaceRepositoryInterface::class);
+        $workspaces = $workspaceRepo->findByTenant($this->tenantId);
+        $this->assertCount(2, $workspaces);
     }
 
-    public function testAnonymousRequestRedirectsToLogin(): void
+    public function testCreatingAWorkspaceWithBlankNameReRendersFormWithError(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/dashboard');
+        $client->loginUser($this->createLoggedInUser($client));
 
-        $this->assertResponseRedirects('/login');
+        $client->request('POST', '/workspace/new', ['name' => '']);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorExists('.text-alert');
+
+        $workspaceRepo = static::getContainer()->get(WorkspaceRepositoryInterface::class);
+        $this->assertCount(1, $workspaceRepo->findByTenant($this->tenantId));
     }
 
-    public function testCrossTenantWorkspaceAccessIsDenied(): void
+    public function testRenamingAWorkspaceUpdatesItsName(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser($client));
+
+        $client->request('POST', '/workspace/' . $this->workspacePublicId . '/edit', ['name' => 'Renamed Workspace']);
+
+        $this->assertResponseRedirects('/workspace/' . $this->workspacePublicId . '/dashboard');
+
+        $workspaceRepo = static::getContainer()->get(WorkspaceRepositoryInterface::class);
+        $this->assertSame('Renamed Workspace', $workspaceRepo->findByPublicId($this->workspacePublicId)->getName());
+    }
+
+    public function testEditingAnotherTenantsWorkspaceIsDenied(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createLoggedInUser($client));
@@ -105,47 +125,8 @@ class DashboardControllerTest extends WebTestCase
         $otherWorkspace = new Workspace($otherTenant->getId(), 'Default');
         $container->get(WorkspaceRepositoryInterface::class)->save($otherWorkspace);
 
-        $client->request('GET', '/workspace/' . $otherWorkspace->getPublicId() . '/availability');
+        $client->request('GET', '/workspace/' . $otherWorkspace->getPublicId() . '/edit');
 
         $this->assertResponseStatusCodeSame(403);
-    }
-
-    public function testMonitorFromAnotherWorkspaceInSameTenantIsNotFound(): void
-    {
-        $client = static::createClient();
-        $client->loginUser($this->createLoggedInUser($client));
-
-        $container = static::getContainer();
-        $monitorRepo = $container->get(MonitorRepositoryInterface::class);
-        $workspaceRepo = $container->get(WorkspaceRepositoryInterface::class);
-
-        $tenantId = $workspaceRepo->find($this->workspaceId)->getTenantId();
-        $otherWorkspace = new Workspace($tenantId, 'Other Workspace');
-        $workspaceRepo->save($otherWorkspace);
-
-        $otherWorkspaceMonitor = new Monitor($otherWorkspace->getId(), 'Other Workspace Monitor', 'http', 'https://example.com', 5);
-        $monitorRepo->save($otherWorkspaceMonitor);
-
-        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/monitor/' . $otherWorkspaceMonitor->getPublicId());
-
-        $this->assertResponseStatusCodeSame(404);
-    }
-
-    public function testMonitorShowUsesPublicIdNotDatabaseId(): void
-    {
-        $client = static::createClient();
-        $client->loginUser($this->createLoggedInUser($client));
-
-        $monitorRepo = static::getContainer()->get(MonitorRepositoryInterface::class);
-
-        $monitor = new Monitor($this->workspaceId, 'My Monitor', 'http', 'https://example.com', 5);
-        $monitorRepo->save($monitor);
-
-        // The route only accepts the generated UUID — the raw database id must not resolve.
-        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/monitor/' . $monitor->getId());
-        $this->assertResponseStatusCodeSame(404);
-
-        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/monitor/' . $monitor->getPublicId());
-        $this->assertResponseIsSuccessful();
     }
 }

@@ -8,10 +8,12 @@ use App\Domain\Entity\Identity;
 use App\Domain\Entity\Tenant;
 use App\Domain\Entity\TenantMembership;
 use App\Domain\Entity\UserCredentials;
+use App\Domain\Entity\Workspace;
 use App\Domain\Repository\IdentityRepositoryInterface;
 use App\Domain\Repository\TenantMembershipRepositoryInterface;
 use App\Domain\Repository\TenantRepositoryInterface;
 use App\Domain\Repository\UserCredentialsRepositoryInterface;
+use App\Domain\Repository\WorkspaceRepositoryInterface;
 use App\Domain\Service\PasswordHasherInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -38,6 +40,7 @@ class CreateTestUsersCommand extends Command
         private UserCredentialsRepositoryInterface $userCredentialsRepository,
         private TenantRepositoryInterface $tenantRepository,
         private TenantMembershipRepositoryInterface $tenantMembershipRepository,
+        private WorkspaceRepositoryInterface $workspaceRepository,
         private PasswordHasherInterface $passwordHasher
     ) {
         parent::__construct();
@@ -96,6 +99,9 @@ class CreateTestUsersCommand extends Command
 
             $membership = new TenantMembership($tenantId, $identityId, 'owner');
             $this->tenantMembershipRepository->save($membership);
+
+            $workspace = new Workspace($tenantId, 'Default');
+            $this->workspaceRepository->save($workspace);
 
             $rows[] = [$email, $password, $tenantName, $tenantId];
         }

@@ -21,7 +21,7 @@
         {{ m.kpi_delta(sessionTimeDelta) }}
     </div>
 
-    <div class="pl-6" data-kpi="online-now" data-controller="online-now" data-online-now-url-value="{{ path('analytics_online_now') }}">
+    <div class="pl-6" data-kpi="online-now" data-controller="online-now" data-online-now-url-value="{{ path('workspace_analytics_online_now', {workspacePublicId: workspace.publicId}) }}">
         <p class="text-xs font-medium text-ink-muted flex items-center gap-1.5">
             Online
             <span class="w-2 h-2 rounded-full bg-signal inline-block"></span>

@@ -20,7 +20,7 @@ interface MonitorRepositoryInterface
     /**
      * @return Monitor[]
      */
-    public function findActiveMonitorsByTenant(int $tenantId): array;
+    public function findActiveMonitorsByWorkspace(int $workspaceId): array;
 
     public function save(Monitor $monitor): void;
 

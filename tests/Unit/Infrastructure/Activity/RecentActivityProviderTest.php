@@ -22,7 +22,7 @@ class RecentActivityProviderTest extends TestCase
         $item->method('get')->willReturn($cachedActivity);
 
         $cache = $this->createMock(CacheItemPoolInterface::class);
-        $cache->method('getItem')->with('recent_activity_tenant_42')->willReturn($item);
+        $cache->method('getItem')->with('recent_activity_workspace_42')->willReturn($item);
 
         $connection = $this->createMock(Connection::class);
         $connection->expects($this->never())->method('executeQuery');

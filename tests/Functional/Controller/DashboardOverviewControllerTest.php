@@ -11,6 +11,7 @@ use App\Domain\Entity\Monitor;
 use App\Domain\Entity\Tenant;
 use App\Domain\Entity\TenantMembership;
 use App\Domain\Entity\UserCredentials;
+use App\Domain\Entity\Workspace;
 use App\Domain\Repository\AlertEventRepositoryInterface;
 use App\Domain\Repository\AlertRuleRepositoryInterface;
 use App\Domain\Repository\IdentityRepositoryInterface;
@@ -18,6 +19,7 @@ use App\Domain\Repository\MonitorRepositoryInterface;
 use App\Domain\Repository\TenantMembershipRepositoryInterface;
 use App\Domain\Repository\TenantRepositoryInterface;
 use App\Domain\Repository\UserCredentialsRepositoryInterface;
+use App\Domain\Repository\WorkspaceRepositoryInterface;
 use App\Domain\Service\PasswordHasherInterface;
 use App\Infrastructure\Security\IdentityUser;
 use Doctrine\DBAL\Connection;
@@ -28,6 +30,9 @@ class DashboardOverviewControllerTest extends WebTestCase
 {
     private ?Connection $connection = null;
     private string $siteId = '';
+    private string $workspacePublicId = '';
+    private int $workspaceId = 0;
+    private int $tenantId = 0;
 
     protected function tearDown(): void
     {
@@ -36,6 +41,7 @@ class DashboardOverviewControllerTest extends WebTestCase
             $this->connection->executeStatement('DELETE FROM alert_events');
             $this->connection->executeStatement('DELETE FROM alert_rules');
             $this->connection->executeStatement('DELETE FROM monitors');
+            $this->connection->executeStatement('DELETE FROM workspaces');
             $this->connection->executeStatement('DELETE FROM tenant_memberships');
             $this->connection->executeStatement('DELETE FROM tenants');
             $this->connection->executeStatement('DELETE FROM user_credentials');
@@ -51,7 +57,7 @@ class DashboardOverviewControllerTest extends WebTestCase
         $client = static::createClient();
         $client->loginUser($this->createLoggedInUser());
 
-        $client->request('GET', '/dashboard');
+        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('body', 'Aucun moniteur configuré');
@@ -62,23 +68,17 @@ class DashboardOverviewControllerTest extends WebTestCase
         $client = static::createClient();
         $client->loginUser($this->createLoggedInUser());
 
-        $container = static::getContainer();
-        $monitorRepo = $container->get(MonitorRepositoryInterface::class);
-        $membershipRepo = $container->get(TenantMembershipRepositoryInterface::class);
-        $tenantId = $membershipRepo->findByIdentityId(
-            $container->get(IdentityRepositoryInterface::class)->findByEmail('user@example.test')->getId()
-        )[0]->getTenantId();
+        $monitorRepo = static::getContainer()->get(MonitorRepositoryInterface::class);
+        $monitorRepo->save(new Monitor($this->workspaceId, 'No checks yet', 'http', 'https://example.com', 5));
 
-        $monitorRepo->save(new Monitor($tenantId, 'No checks yet', 'http', 'https://example.com', 5));
-
-        $crawler = $client->request('GET', '/dashboard');
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard');
 
         $this->assertResponseIsSuccessful();
         $this->assertSame('1', trim($crawler->filter('[data-summary="monitors-pending"] p.text-2xl')->text()));
         $this->assertSame('0', trim($crawler->filter('[data-summary="monitors-up"] p.text-2xl')->text()));
     }
 
-    public function testAnalyticsRecapCountsOnlyThisTenantsPageviews(): void
+    public function testAnalyticsRecapCountsOnlyThisWorkspacesPageviews(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createLoggedInUser());
@@ -98,7 +98,7 @@ class DashboardOverviewControllerTest extends WebTestCase
             'event_type' => 'pageview',
         ]);
 
-        $crawler = $client->request('GET', '/dashboard');
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard');
 
         $this->assertResponseIsSuccessful();
         $this->assertSame('1', trim($crawler->filter('[data-summary="analytics-visitors"] p.text-2xl')->text()));
@@ -114,12 +114,8 @@ class DashboardOverviewControllerTest extends WebTestCase
         $monitorRepo = $container->get(MonitorRepositoryInterface::class);
         $ruleRepo = $container->get(AlertRuleRepositoryInterface::class);
         $eventRepo = $container->get(AlertEventRepositoryInterface::class);
-        $membershipRepo = $container->get(TenantMembershipRepositoryInterface::class);
-        $tenantId = $membershipRepo->findByIdentityId(
-            $container->get(IdentityRepositoryInterface::class)->findByEmail('user@example.test')->getId()
-        )[0]->getTenantId();
 
-        $monitor = new Monitor($tenantId, 'API', 'http', 'https://example.com', 5);
+        $monitor = new Monitor($this->workspaceId, 'API', 'http', 'https://example.com', 5);
         $monitorRepo->save($monitor);
 
         $rule = new AlertRule($monitor->getId(), 'down_count', 1, 'email', 'ops@example.test');
@@ -133,7 +129,7 @@ class DashboardOverviewControllerTest extends WebTestCase
         $newer->setResolvedAt(new \DateTimeImmutable('-1 minute'));
         $eventRepo->save($newer);
 
-        $crawler = $client->request('GET', '/dashboard');
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard');
 
         $this->assertResponseIsSuccessful();
         $items = $crawler->filter('[data-activity-item]');
@@ -143,7 +139,7 @@ class DashboardOverviewControllerTest extends WebTestCase
         $this->assertStringContainsString('en panne', $items->eq(1)->text());
     }
 
-    public function testRecentActivityIsIsolatedByTenant(): void
+    public function testRecentActivityIsIsolatedByWorkspace(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createLoggedInUser());
@@ -152,14 +148,18 @@ class DashboardOverviewControllerTest extends WebTestCase
         $monitorRepo = $container->get(MonitorRepositoryInterface::class);
         $ruleRepo = $container->get(AlertRuleRepositoryInterface::class);
         $eventRepo = $container->get(AlertEventRepositoryInterface::class);
+        $workspaceRepo = $container->get(WorkspaceRepositoryInterface::class);
 
-        $otherMonitor = new Monitor(999999, 'Other Tenant Monitor', 'http', 'https://example.com', 5);
+        $otherWorkspace = new Workspace($this->tenantId, 'Other Workspace');
+        $workspaceRepo->save($otherWorkspace);
+
+        $otherMonitor = new Monitor($otherWorkspace->getId(), 'Other Workspace Monitor', 'http', 'https://example.com', 5);
         $monitorRepo->save($otherMonitor);
         $otherRule = new AlertRule($otherMonitor->getId(), 'down_count', 1, 'email', 'ops@example.test');
         $ruleRepo->save($otherRule);
         $eventRepo->save(new AlertEvent($otherRule->getId(), 'triggered', new \DateTimeImmutable()));
 
-        $client->request('GET', '/dashboard');
+        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('body', 'Aucune activité récente');
@@ -173,7 +173,7 @@ class DashboardOverviewControllerTest extends WebTestCase
         $this->insertPageview('session-fr', 'FR', '/pricing', '-1 minute');
         $this->insertPageview('session-us', 'US', '/', '-2 minutes');
 
-        $client->request('GET', '/dashboard/live-globe');
+        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard/live-globe');
 
         $this->assertResponseIsSuccessful();
         $data = json_decode($client->getResponse()->getContent(), true);
@@ -201,7 +201,7 @@ class DashboardOverviewControllerTest extends WebTestCase
             'event_type' => 'pageview',
         ]);
 
-        $client->request('GET', '/dashboard/live-globe');
+        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard/live-globe');
 
         $this->assertResponseIsSuccessful();
         $data = json_decode($client->getResponse()->getContent(), true);
@@ -227,7 +227,7 @@ class DashboardOverviewControllerTest extends WebTestCase
             'event_name' => 'purchase',
         ]);
 
-        $client->request('GET', '/dashboard/live-globe');
+        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard/live-globe');
 
         $this->assertResponseIsSuccessful();
         $data = json_decode($client->getResponse()->getContent(), true);
@@ -251,7 +251,7 @@ class DashboardOverviewControllerTest extends WebTestCase
             'event_type' => 'pageview',
         ]);
 
-        $client->request('GET', '/dashboard/live-globe');
+        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard/live-globe');
 
         $this->assertResponseIsSuccessful();
         $data = json_decode($client->getResponse()->getContent(), true);
@@ -269,7 +269,7 @@ class DashboardOverviewControllerTest extends WebTestCase
 
         $this->insertPageview('session-old', 'FR', '/old-page', '-1 hour');
 
-        $client->request('GET', '/dashboard/live-globe');
+        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard/live-globe');
 
         $this->assertResponseIsSuccessful();
         $data = json_decode($client->getResponse()->getContent(), true);
@@ -286,7 +286,7 @@ class DashboardOverviewControllerTest extends WebTestCase
         $this->insertPageview('session-recent', 'FR', '/', '-1 day');
         $this->insertPageview('session-old', 'US', '/', '-10 days');
 
-        $crawler = $client->request('GET', '/dashboard');
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard');
 
         $this->assertResponseIsSuccessful();
         // All-time total includes both, regardless of the 7-day breakdown below.
@@ -311,7 +311,7 @@ class DashboardOverviewControllerTest extends WebTestCase
             'event_type' => 'pageview',
         ]);
 
-        $crawler = $client->request('GET', '/dashboard');
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard');
 
         $this->assertResponseIsSuccessful();
         // No resolved country at all this period: the breakdown shouldn't render
@@ -343,11 +343,12 @@ class DashboardOverviewControllerTest extends WebTestCase
         $identityRepo = $container->get(IdentityRepositoryInterface::class);
         $credentialsRepo = $container->get(UserCredentialsRepositoryInterface::class);
         $membershipRepo = $container->get(TenantMembershipRepositoryInterface::class);
+        $workspaceRepo = $container->get(WorkspaceRepositoryInterface::class);
         $hasher = $container->get(PasswordHasherInterface::class);
 
         $tenant = new Tenant('Test Tenant', 'test-tenant');
         $tenantRepo->save($tenant);
-        $this->siteId = $tenant->getSiteId();
+        $this->tenantId = $tenant->getId();
 
         $identity = new Identity('user@example.test');
         $identityRepo->save($identity);
@@ -356,6 +357,12 @@ class DashboardOverviewControllerTest extends WebTestCase
         $credentialsRepo->save($credentials);
 
         $membershipRepo->save(new TenantMembership($tenant->getId(), $identity->getId(), 'owner'));
+
+        $workspace = new Workspace($tenant->getId(), 'Default');
+        $workspaceRepo->save($workspace);
+        $this->workspacePublicId = $workspace->getPublicId();
+        $this->workspaceId = $workspace->getId();
+        $this->siteId = $workspace->getSiteId();
 
         return new IdentityUser($identity, $credentials);
     }

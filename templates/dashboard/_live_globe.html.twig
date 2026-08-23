@@ -1,6 +1,6 @@
 <div class="bg-white border border-line p-6"
      data-controller="globe"
-     data-globe-url-value="{{ path('dashboard_live_globe') }}"
+     data-globe-url-value="{{ path('workspace_dashboard_live_globe', {workspacePublicId: workspace.publicId}) }}"
      data-globe-initial-value="{{ liveGlobe|json_encode }}">
     <div class="flex items-center justify-between mb-4">
         <h2 class="font-mono text-sm font-bold text-ink uppercase tracking-wider flex items-center gap-2">

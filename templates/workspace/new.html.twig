@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Workspace - SiteTrack{% endblock %}
+
+{% block body %}
+<div class="max-w-lg mx-auto px-4 sm:px-0">
+    <div class="mb-6">
+        <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Create a Workspace</h1>
+        <p class="text-sm font-body text-ink-muted">A workspace groups its own monitors and analytics — create one per site or product you manage.</p>
+    </div>
+
+    <div class="bg-white border border-line p-6">
+        <form method="POST" action="{{ path('workspace_new') }}" class="space-y-6">
+            <div>
+                <label for="name" class="block text-sm font-body font-semibold text-ink">Workspace Name</label>
+                <input type="text" name="name" id="name" value="{{ dto.name }}" required
+                       class="mt-1 block w-full rounded-sm border-line focus:border-signal focus:ring-signal sm:text-sm p-2 border">
+                {% if errors.name is defined %}
+                    <p class="mt-1 text-xs text-alert">{{ errors.name }}</p>
+                {% endif %}
+            </div>
+
+            <div class="pt-4 flex justify-end gap-3 border-t border-line">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-medium rounded-sm text-paper bg-signal hover:bg-signal-dark">
+                    Create Workspace
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

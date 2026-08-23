@@ -12,12 +12,12 @@
     <div class="bg-white border border-line p-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="font-mono text-sm font-bold text-ink uppercase tracking-wider">Disponibilité</h2>
-            <a href="{{ path('availability_index') }}" class="text-xs font-medium text-signal hover:text-signal-dark">Voir tout →</a>
+            <a href="{{ path('workspace_availability_index', {workspacePublicId: workspace.publicId}) }}" class="text-xs font-medium text-signal hover:text-signal-dark">Voir tout →</a>
         </div>
 
         {% if monitorSummary.total == 0 %}
             <p class="text-sm text-ink-muted">Aucun moniteur configuré pour le moment.</p>
-            <a href="{{ path('monitor_new') }}" class="mt-3 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-sm text-paper bg-signal hover:bg-signal-dark">
+            <a href="{{ path('workspace_monitor_new', {workspacePublicId: workspace.publicId}) }}" class="mt-3 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-sm text-paper bg-signal hover:bg-signal-dark">
                 Créer un moniteur
             </a>
         {% else %}
@@ -41,7 +41,7 @@
     <div class="bg-white border border-line p-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="font-mono text-sm font-bold text-ink uppercase tracking-wider">Analytics <span class="text-ink-muted font-normal normal-case">· 7 derniers jours</span></h2>
-            <a href="{{ path('analytics_index') }}" class="text-xs font-medium text-signal hover:text-signal-dark">Voir tout →</a>
+            <a href="{{ path('workspace_analytics_index', {workspacePublicId: workspace.publicId}) }}" class="text-xs font-medium text-signal hover:text-signal-dark">Voir tout →</a>
         </div>
 
         <div class="grid grid-cols-3 divide-x divide-line">
@@ -79,7 +79,7 @@
                     <li class="px-6 py-3 flex items-center justify-between gap-4" data-activity-item>
                         <div class="flex items-center gap-2 min-w-0">
                             <span class="w-2 h-2 rounded-full shrink-0 {{ item.status == 'resolved' ? 'bg-signal' : 'bg-alert' }}"></span>
-                            <a href="{{ path('monitor_show', {publicId: item.monitorPublicId}) }}" class="text-sm font-medium text-ink truncate hover:text-signal">{{ item.monitorName }}</a>
+                            <a href="{{ path('workspace_monitor_show', {workspacePublicId: workspace.publicId, monitorPublicId: item.monitorPublicId}) }}" class="text-sm font-medium text-ink truncate hover:text-signal">{{ item.monitorName }}</a>
                             <span class="text-sm text-ink-muted shrink-0">{{ item.status == 'resolved' ? 'rétabli' : 'en panne' }}</span>
                         </div>
                         <span class="font-mono text-xs text-ink-muted shrink-0">{{ item.relativeTime }}</span>
