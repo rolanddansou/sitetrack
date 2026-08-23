@@ -21,33 +21,38 @@ class AnalyticsApiController extends AbstractController
     public function __construct(
         private GeoIpResolverInterface $geoIpResolver,
         private UserAgentParserInterface $userAgentParser,
-        private RateLimiterFactory $analyticsCollectLimiter
+        private RateLimiterFactory $analyticsCollectLimiter,
+        private RateLimiterFactory $analyticsCollectIpLimiter
     ) {}
 
     #[Route('/api/event', name: 'analytics_api_event', methods: ['POST'])]
     public function recordEvent(Request $request, MessageBusInterface $messageBus): Response
     {
-        $data = json_decode($request->getContent(), true) ?? [];
+        $decoded = json_decode($request->getContent(), true);
+        $data = is_array($decoded) ? $decoded : [];
 
-        $siteId = $data['site_id'] ?? null;
-        $path = $data['path'] ?? null;
+        $siteId = $this->stringField($data, 'site_id', 100);
+        $path = $this->stringField($data, 'path', 255);
         if ($siteId === null || $path === null) {
-            $response = new JsonResponse(['error' => 'Missing site_id or path'], Response::HTTP_BAD_REQUEST);
-            $response->headers->set('Access-Control-Allow-Origin', '*');
-            return $response;
+            return $this->corsResponse(new JsonResponse(['error' => 'Missing site_id or path'], Response::HTTP_BAD_REQUEST));
         }
-
-        $limit = $this->analyticsCollectLimiter->create((string) $siteId)->consume();
-        if (!$limit->isAccepted()) {
-            $response = new JsonResponse(['error' => 'Too many requests'], Response::HTTP_TOO_MANY_REQUESTS);
-            $response->headers->set('Access-Control-Allow-Origin', '*');
-            $response->headers->set('Retry-After', (string) ($limit->getRetryAfter()->getTimestamp() - time()));
-            return $response;
-        }
-
-        $referrer = $data['referrer'] ?? null;
 
         $ip = $request->getClientIp() ?? '127.0.0.1';
+
+        // Two independent limiters: per-site protects one site's bucket from
+        // being singled out, per-IP stops a client from bypassing that by
+        // simply sending a different site_id on every request.
+        foreach ([$this->analyticsCollectLimiter->create($siteId), $this->analyticsCollectIpLimiter->create($ip)] as $limiter) {
+            $limit = $limiter->consume();
+            if (!$limit->isAccepted()) {
+                $response = $this->corsResponse(new JsonResponse(['error' => 'Too many requests'], Response::HTTP_TOO_MANY_REQUESTS));
+                $response->headers->set('Retry-After', (string) max(0, $limit->getRetryAfter()->getTimestamp() - time()));
+                return $response;
+            }
+        }
+
+        $referrer = $this->stringField($data, 'referrer', 255);
+
         $geo = $this->geoIpResolver->resolve($ip);
         $country = $request->headers->get('CF-IPCountry') ?? $request->headers->get('X-Country-Code') ?? $geo['country'];
 
@@ -68,22 +73,36 @@ class AnalyticsApiController extends AbstractController
             occurredAt: new \DateTimeImmutable(),
             region: $geo['region'],
             city: $geo['city'],
-            utmSource: $data['utm_source'] ?? null,
-            utmMedium: $data['utm_medium'] ?? null,
-            utmCampaign: $data['utm_campaign'] ?? null,
+            utmSource: $this->stringField($data, 'utm_source', 255),
+            utmMedium: $this->stringField($data, 'utm_medium', 255),
+            utmCampaign: $this->stringField($data, 'utm_campaign', 255),
             device: $ua['device'],
             browser: $ua['browser'],
             browserVersion: $ua['browserVersion'],
             os: $ua['os'],
             osVersion: $ua['osVersion'],
-            eventType: $data['event_type'] ?? 'pageview',
-            eventName: $data['event_name'] ?? null,
+            eventType: $this->stringField($data, 'event_type', 20) ?? 'pageview',
+            eventName: $this->stringField($data, 'event_name', 255),
             eventProps: is_array($eventProps) ? $eventProps : null
         );
 
         $messageBus->dispatch(new AnalyticsEventMessage($dto));
 
-        $response = new Response('', Response::HTTP_NO_CONTENT);
+        return $this->corsResponse(new Response('', Response::HTTP_NO_CONTENT));
+    }
+
+    private function stringField(array $data, string $key, int $maxLength): ?string
+    {
+        $value = $data[$key] ?? null;
+        if (!is_string($value) || $value === '') {
+            return null;
+        }
+
+        return mb_substr($value, 0, $maxLength);
+    }
+
+    private function corsResponse(Response $response): Response
+    {
         $response->headers->set('Access-Control-Allow-Origin', '*');
         return $response;
     }

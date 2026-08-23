@@ -4,3 +4,7 @@ framework:
             policy: 'token_bucket'
             limit: 1000
             rate: { interval: '1 minute', amount: 1000 }
+        analytics_collect_ip:
+            policy: 'token_bucket'
+            limit: 300
+            rate: { interval: '1 minute', amount: 300 }

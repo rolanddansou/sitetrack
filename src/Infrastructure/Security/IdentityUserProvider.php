@@ -6,6 +6,7 @@ namespace App\Infrastructure\Security;
 
 use App\Domain\Repository\IdentityRepositoryInterface;
 use App\Domain\Repository\UserCredentialsRepositoryInterface;
+use Symfony\Component\Security\Core\Exception\DisabledException;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -23,6 +24,10 @@ class IdentityUserProvider implements UserProviderInterface
         $identity = $this->identityRepository->findByEmail($identifier);
         if ($identity === null || $identity->getId() === null) {
             throw new UserNotFoundException(sprintf('Identity with email "%s" not found.', $identifier));
+        }
+
+        if (!$identity->isEnabled()) {
+            throw new DisabledException(sprintf('Identity with email "%s" is disabled.', $identifier));
         }
 
         $credentials = $this->userCredentialsRepository->findByIdentityId($identity->getId());

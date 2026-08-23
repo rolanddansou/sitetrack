@@ -11,6 +11,7 @@ use App\Domain\Repository\UserCredentialsRepositoryInterface;
 use App\Infrastructure\Security\IdentityUser;
 use App\Infrastructure\Security\IdentityUserProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Security\Core\Exception\DisabledException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 
 class IdentityUserProviderTest extends TestCase
@@ -60,6 +61,22 @@ class IdentityUserProviderTest extends TestCase
         $provider = new IdentityUserProvider($identityRepo, $credentialsRepo);
 
         $this->expectException(UserNotFoundException::class);
+        $provider->loadUserByIdentifier('user@example.test');
+    }
+
+    public function testLoadUserByIdentifierThrowsDisabledExceptionWhenIdentityIsDisabled(): void
+    {
+        $identity = (new Identity('user@example.test'))->setId(1)->setEnabled(false);
+
+        $identityRepo = $this->createMock(IdentityRepositoryInterface::class);
+        $identityRepo->method('findByEmail')->willReturn($identity);
+
+        $credentialsRepo = $this->createMock(UserCredentialsRepositoryInterface::class);
+        $credentialsRepo->expects($this->never())->method('findByIdentityId');
+
+        $provider = new IdentityUserProvider($identityRepo, $credentialsRepo);
+
+        $this->expectException(DisabledException::class);
         $provider->loadUserByIdentifier('user@example.test');
     }
 
