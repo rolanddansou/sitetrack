@@ -1,0 +1,58 @@
+<div class="bg-white border border-line p-6"
+     data-controller="globe"
+     data-globe-url-value="{{ path('dashboard_live_globe') }}"
+     data-globe-initial-value="{{ liveGlobe|json_encode }}">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="font-mono text-sm font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-signal animate-pulse"></span>
+            Qui est en ligne
+        </h2>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="flex items-center justify-center">
+            <canvas data-globe-target="canvas"></canvas>
+        </div>
+
+        <div class="min-w-0">
+            <p class="text-3xl font-mono font-bold text-ink tabular-nums" data-globe-target="count" data-globe="online-count">{{ liveGlobe.online }}</p>
+            <p class="text-sm text-ink-muted">
+                personne(s) sur le site en ce moment · depuis
+                <span class="font-mono" data-globe-target="countries" data-globe="online-countries">{{ liveGlobe.onlineCountries }}</span> pays
+            </p>
+            <p class="mt-1 font-mono text-xs text-ink-muted" data-globe="all-time-visits">
+                {{ allTimeVisits }} visites{% if visitsSince %} depuis le {{ visitsSince|date('d/m/Y') }}{% endif %}
+            </p>
+
+            <ul class="mt-4 divide-y divide-line max-h-48 overflow-y-auto" data-globe-target="feed">
+                {% for item in liveGlobe.feed %}
+                    <li class="py-2 flex items-center justify-between gap-4" data-globe="feed-item">
+                        <span class="text-sm text-ink-muted truncate">
+                            {% if item.country %}<span class="font-mono text-xs text-ink-muted mr-2">{{ item.country }}</span>{% endif %}
+                            quelqu'un lit <span class="font-medium text-ink">{{ item.path }}</span>
+                        </span>
+                        <span class="font-mono text-xs text-ink-muted shrink-0">{{ item.relativeTime }}</span>
+                    </li>
+                {% else %}
+                    <li class="py-2 text-sm text-ink-muted">Aucune activité récente.</li>
+                {% endfor %}
+            </ul>
+
+            {% if countryBreakdown7d is not empty %}
+                <div class="mt-4 pt-4 border-t border-line">
+                    <p class="font-mono text-xs font-medium text-ink-muted uppercase tracking-wide mb-2">Visiteurs · 7j · par pays</p>
+                    <div class="flex flex-wrap gap-2" data-globe="country-breakdown">
+                        {% for row in countryBreakdown7d %}
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-paper-dim border border-line text-xs" data-globe="country-breakdown-item">
+                                <span class="font-mono text-ink-muted">{{ row.label ?: '??' }}</span>
+                                <span class="font-mono font-semibold text-ink">{{ row.count }}</span>
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <p class="mt-4 text-[11px] text-ink-muted">Localisation au niveau pays uniquement — personne n'est identifiable.</p>
+        </div>
+    </div>
+</div>

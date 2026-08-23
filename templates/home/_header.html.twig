@@ -1,20 +1,21 @@
-<header class="border-b border-slate-200 shrink-0">
+<header class="border-b border-line shrink-0 bg-paper">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
-            <a href="{{ path('homepage') }}" class="text-xl font-black text-indigo-600 tracking-tight flex items-center">
-                📡 SiteTrack
+            <a href="{{ path('homepage') }}">
+                {% import 'components/_macros.html.twig' as m %}
+                {{ m.brand_mark() }}
             </a>
 
             {% if app.user %}
                 <a href="{{ path('dashboard_index') }}"
-                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-semibold rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark">
                     Go to dashboard
                 </a>
             {% else %}
-                <div class="flex items-center gap-4">
-                    <a href="{{ path('app_login') }}" class="text-sm font-medium text-slate-600 hover:text-slate-900">Log in</a>
+                <div class="flex items-center gap-6">
+                    <a href="{{ path('app_login') }}" class="text-sm font-body font-medium text-ink-muted hover:text-ink">Log in</a>
                     <a href="{{ path('app_login') }}"
-                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-semibold rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark">
                         Get started
                     </a>
                 </div>

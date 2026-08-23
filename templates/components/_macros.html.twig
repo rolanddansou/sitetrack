@@ -1,90 +1,107 @@
 {# Reusable UI atoms. Rule: a macro if it's invoked more than once with
-   different data; a plain {% include %} for a one-off page section. #}
+   different data; a plain {% include %} for a one-off page section.
+
+   Single "signal instrument" identity across the whole app (public site and
+   authenticated dashboard both use these tokens) — see CLAUDE.md. #}
+
+{% macro brand_mark(textClass = 'text-ink') %}
+    <span class="inline-flex items-center gap-2 font-display font-bold text-lg tracking-tight {{ textClass }}">
+        <svg viewBox="0 0 32 16" class="w-6 h-3 text-signal shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M1 8H8L11 2L16 14L20 6L23 10H31" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        SiteTrack
+    </span>
+{% endmacro %}
 
 {% macro button(label, href, variant = 'primary') %}
-    {% set base = 'inline-flex items-center justify-center px-5 py-2.5 border text-sm font-semibold rounded-md shadow-sm transition-colors' %}
+    {% set base = 'inline-flex items-center justify-center px-5 py-2.5 border text-sm font-body font-semibold rounded-sm transition-colors' %}
     {% set styles = {
-        primary: 'border-transparent text-white bg-indigo-600 hover:bg-indigo-700',
-        secondary: 'border-slate-300 text-slate-700 bg-white hover:bg-slate-50'
+        primary: 'border-transparent text-paper bg-signal hover:bg-signal-dark',
+        secondary: 'border-ink/20 text-ink bg-transparent hover:border-ink/40'
     } %}
     <a href="{{ href }}" class="{{ base }} {{ styles[variant] }}">{{ label }}</a>
 {% endmacro %}
 
 {% macro section_heading(eyebrow, title, subtitle = null) %}
     <div class="max-w-2xl mx-auto text-center">
-        <p class="text-sm font-semibold text-indigo-600 tracking-wide uppercase">{{ eyebrow }}</p>
-        <h2 class="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ title }}</h2>
+        <p class="font-mono text-xs font-medium text-signal tracking-[0.2em] uppercase">{{ eyebrow }}</p>
+        <h2 class="mt-3 text-3xl font-display font-bold tracking-tight text-ink sm:text-4xl">{{ title }}</h2>
         {% if subtitle %}
-            <p class="mt-4 text-lg text-slate-500">{{ subtitle }}</p>
+            <p class="mt-4 text-lg font-body text-ink-muted">{{ subtitle }}</p>
         {% endif %}
     </div>
 {% endmacro %}
 
-{% macro feature_card(icon, title, description, highlight = false) %}
-    <div class="bg-white shadow-sm rounded-lg border {{ highlight ? 'border-indigo-200 ring-1 ring-indigo-100' : 'border-slate-200' }} p-6">
-        <div class="w-10 h-10 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center">
-            {{ ux_icon(icon, {class: 'w-5 h-5'}) }}
+{% macro feature_card(icon, title, description, signalLabel = null, highlight = false) %}
+    <div class="bg-white border {{ highlight ? 'border-signal' : 'border-line' }} p-6">
+        <div class="flex items-center justify-between">
+            <div class="w-10 h-10 border border-line text-signal flex items-center justify-center">
+                {{ ux_icon(icon, {class: 'w-5 h-5'}) }}
+            </div>
+            {% if signalLabel %}
+                <span class="font-mono text-[10px] text-ink-muted tracking-widest">{{ signalLabel }}</span>
+            {% endif %}
         </div>
-        <h3 class="mt-4 text-base font-semibold text-slate-900">{{ title }}</h3>
-        <p class="mt-2 text-sm text-slate-500">{{ description }}</p>
+        <h3 class="mt-4 text-base font-body font-semibold text-ink">{{ title }}</h3>
+        <p class="mt-2 text-sm font-body text-ink-muted">{{ description }}</p>
     </div>
 {% endmacro %}
 
 {% macro stat_card(value, label) %}
-    <div class="bg-white shadow-sm rounded-lg border border-slate-200 px-6 py-5 text-center">
-        <p class="text-2xl font-bold text-slate-900">{{ value }}</p>
-        <p class="mt-1 text-sm text-slate-500">{{ label }}</p>
+    <div class="bg-white border border-line px-6 py-5 text-center">
+        <p class="text-2xl font-mono font-bold text-ink tabular-nums">{{ value }}</p>
+        <p class="mt-1 font-mono text-[11px] text-ink-muted tracking-widest uppercase">{{ label }}</p>
     </div>
 {% endmacro %}
 
 {% macro kpi_delta(delta = null) %}
     {% if delta is not null %}
-        <p class="mt-1 text-xs font-semibold {{ delta.good ? 'text-emerald-600' : 'text-red-500' }}">
+        <p class="mt-1 font-mono text-xs font-semibold {{ delta.good ? 'text-signal-dark' : 'text-alert' }}">
             {{ delta.percent }}% {{ delta.up ? '↑' : '↓' }}
         </p>
     {% endif %}
 {% endmacro %}
 
 {% macro testimonial_card(quote, name, handle) %}
-    <div class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">
-        <p class="text-sm text-slate-700">&ldquo;{{ quote }}&rdquo;</p>
-        <div class="mt-4">
-            <p class="text-sm font-semibold text-slate-900">{{ name }}</p>
-            <p class="text-sm text-slate-500">{{ handle }}</p>
+    <div class="bg-white border border-line p-6">
+        <p class="text-sm font-body text-ink"><span class="font-mono text-signal">&ldquo;</span>{{ quote }}<span class="font-mono text-signal">&rdquo;</span></p>
+        <div class="mt-4 pt-4 border-t border-line">
+            <p class="text-sm font-body font-semibold text-ink">{{ name }}</p>
+            <p class="font-mono text-xs text-ink-muted">{{ handle }}</p>
         </div>
     </div>
 {% endmacro %}
 
 {% macro pricing_card(name, price, period, features, cta_label, cta_href, featured = false) %}
-    <div class="bg-white rounded-lg border {{ featured ? 'border-indigo-600 ring-2 ring-indigo-600' : 'border-slate-200' }} shadow-sm p-8 flex flex-col">
+    <div class="bg-white border {{ featured ? 'border-signal' : 'border-line' }} p-8 flex flex-col relative">
         {% if featured %}
-            <span class="self-start mb-4 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Most popular</span>
+            <span class="absolute -top-3 left-8 px-2 py-0.5 bg-signal font-mono text-[10px] font-medium text-paper tracking-widest uppercase">Most popular</span>
         {% endif %}
-        <h3 class="text-lg font-semibold text-slate-900">{{ name }}</h3>
+        <h3 class="font-body text-lg font-semibold text-ink">{{ name }}</h3>
         <p class="mt-4 flex items-baseline">
-            <span class="text-4xl font-bold tracking-tight text-slate-900">{{ price }}</span>
-            <span class="ml-1 text-sm text-slate-500">/{{ period }}</span>
+            <span class="text-4xl font-mono font-bold tracking-tight text-ink tabular-nums">{{ price }}</span>
+            <span class="ml-1 font-mono text-sm text-ink-muted">/{{ period }}</span>
         </p>
         <ul class="mt-6 space-y-3 flex-1">
             {% for feature in features %}
-                <li class="flex items-start gap-2 text-sm text-slate-600">
-                    {{ ux_icon('heroicons:check', {class: 'w-5 h-5 text-indigo-600 shrink-0'}) }}
+                <li class="flex items-start gap-2 text-sm font-body text-ink-muted">
+                    {{ ux_icon('heroicons:check', {class: 'w-5 h-5 text-signal shrink-0'}) }}
                     <span>{{ feature }}</span>
                 </li>
             {% endfor %}
         </ul>
-        <a href="{{ cta_href }}" class="mt-8 inline-flex items-center justify-center px-5 py-2.5 rounded-md text-sm font-semibold shadow-sm {{ featured ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50' }}">
+        <a href="{{ cta_href }}" class="mt-8 inline-flex items-center justify-center px-5 py-2.5 text-sm font-body font-semibold {{ featured ? 'bg-signal text-paper hover:bg-signal-dark' : 'bg-transparent border border-ink/20 text-ink hover:border-ink/40' }}">
             {{ cta_label }}
         </a>
     </div>
 {% endmacro %}
 
 {% macro tabbed_list(tabs) %}
-    <div class="bg-white shadow-sm rounded-lg border border-slate-200 overflow-hidden" data-controller="tabs">
-        <div class="flex border-b border-slate-200 bg-slate-50">
+    <div class="bg-white border border-line overflow-hidden" data-controller="tabs">
+        <div class="flex border-b border-line bg-paper-dim">
             {% for tab in tabs %}
                 <button type="button"
-                        class="px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 {{ loop.first ? 'text-indigo-600 border-indigo-600' : 'text-slate-400 border-transparent' }}"
+                        class="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider border-b-2 {{ loop.first ? 'text-signal border-signal' : 'text-ink-muted border-transparent' }}"
                         data-tabs-target="tab"
                         data-action="click->tabs#show"
                         data-tabs-index-param="{{ loop.index0 }}">
@@ -95,14 +112,14 @@
         {% for tab in tabs %}
             <div class="{{ not loop.first ? 'hidden' : '' }}" data-tabs-target="panel">
                 {% if tab.rows is empty %}
-                    <p class="text-xs text-slate-400 p-6 text-center">No data yet.</p>
+                    <p class="text-xs text-ink-muted p-6 text-center">No data yet.</p>
                 {% else %}
-                    <table class="min-w-full divide-y divide-slate-100 text-xs">
-                        <tbody class="divide-y divide-slate-100 bg-white">
+                    <table class="min-w-full divide-y divide-line text-xs">
+                        <tbody class="divide-y divide-line bg-white">
                             {% for row in tab.rows %}
-                                <tr class="hover:bg-slate-50">
-                                    <td class="px-6 py-3 font-medium text-slate-700 truncate max-w-xs">{{ row.label ?: 'Unknown' }}</td>
-                                    <td class="px-6 py-3 text-right text-slate-500 font-semibold">{{ row.count }}</td>
+                                <tr class="hover:bg-paper-dim">
+                                    <td class="px-6 py-3 font-medium text-ink truncate max-w-xs">{{ row.label ?: 'Unknown' }}</td>
+                                    <td class="px-6 py-3 text-right font-mono text-ink-muted font-semibold">{{ row.count }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -114,17 +131,17 @@
 {% endmacro %}
 
 {% macro faq_item(question, answer) %}
-    <div class="border-b border-slate-200 py-5" data-controller="accordion">
+    <div class="border-b border-line py-5" data-controller="accordion">
         <button type="button"
                 class="flex w-full items-center justify-between text-left gap-4"
                 aria-expanded="false"
                 data-action="click->accordion#toggle">
-            <span class="text-sm font-semibold text-slate-900">{{ question }}</span>
-            <span data-accordion-target="icon" class="shrink-0 text-slate-400 transition-transform duration-200">
+            <span class="text-sm font-body font-semibold text-ink">{{ question }}</span>
+            <span data-accordion-target="icon" class="shrink-0 text-ink-muted transition-transform duration-200">
                 {{ ux_icon('heroicons:chevron-down', {class: 'w-5 h-5'}) }}
             </span>
         </button>
-        <div data-accordion-target="content" class="mt-2 pr-8 text-sm text-slate-500 hidden">
+        <div data-accordion-target="content" class="mt-2 pr-8 text-sm font-body text-ink-muted hidden">
             {{ answer }}
         </div>
     </div>

@@ -165,6 +165,175 @@ class DashboardOverviewControllerTest extends WebTestCase
         $this->assertSelectorTextContains('body', 'Aucune activité récente');
     }
 
+    public function testLiveGlobeEndpointCountsOnlineVisitorsByCountry(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser());
+
+        $this->insertPageview('session-fr', 'FR', '/pricing', '-1 minute');
+        $this->insertPageview('session-us', 'US', '/', '-2 minutes');
+
+        $client->request('GET', '/dashboard/live-globe');
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertSame(2, $data['online']);
+        $this->assertSame(2, $data['onlineCountries']);
+        $this->assertCount(2, $data['pins']);
+        $this->assertCount(2, $data['feed']);
+        $this->assertSame('/pricing', $data['feed'][0]['path']);
+        $this->assertSame('FR', $data['feed'][0]['country']);
+    }
+
+    public function testLiveGlobeEndpointIsIsolatedByTenant(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser());
+
+        $this->insertPageview('session-mine', 'FR', '/', '-1 minute');
+        $this->connection->insert('analytics_events', [
+            'site_id' => 'someone-elses-site',
+            'path' => '/secret',
+            'country' => 'DE',
+            'session_id' => 'session-other',
+            'occurred_at' => (new \DateTimeImmutable('-1 minute'))->format('Y-m-d H:i:s'),
+            'event_type' => 'pageview',
+        ]);
+
+        $client->request('GET', '/dashboard/live-globe');
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertSame(1, $data['online']);
+        $this->assertCount(1, $data['feed']);
+        $this->assertSame('FR', $data['feed'][0]['country']);
+    }
+
+    public function testLiveGlobeExcludesNonPageviewEvents(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser());
+
+        $this->insertPageview('session-a', 'FR', '/', '-1 minute');
+        $this->connection->insert('analytics_events', [
+            'site_id' => $this->siteId,
+            'path' => '/checkout',
+            'country' => 'FR',
+            'session_id' => 'session-a',
+            'occurred_at' => (new \DateTimeImmutable('-30 seconds'))->format('Y-m-d H:i:s'),
+            'event_type' => 'event',
+            'event_name' => 'purchase',
+        ]);
+
+        $client->request('GET', '/dashboard/live-globe');
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertCount(1, $data['feed']);
+        $this->assertSame('/', $data['feed'][0]['path']);
+    }
+
+    public function testLiveGlobePinsExcludeSessionsWithUnresolvedGeoIp(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser());
+
+        $this->insertPageview('session-fr', 'FR', '/', '-1 minute');
+        $this->connection->insert('analytics_events', [
+            'site_id' => $this->siteId,
+            'path' => '/',
+            'country' => null,
+            'session_id' => 'session-unresolved',
+            'occurred_at' => (new \DateTimeImmutable('-1 minute'))->format('Y-m-d H:i:s'),
+            'event_type' => 'pageview',
+        ]);
+
+        $client->request('GET', '/dashboard/live-globe');
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertSame(2, $data['online'], 'both sessions still count toward "online"');
+        $this->assertSame(1, $data['onlineCountries'], 'the null-country session must not inflate the country count');
+        $this->assertCount(1, $data['pins']);
+        $this->assertSame('FR', $data['pins'][0]['country']);
+    }
+
+    public function testLiveGlobeFeedExcludesActivityOutsideTheOnlineWindow(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser());
+
+        $this->insertPageview('session-old', 'FR', '/old-page', '-1 hour');
+
+        $client->request('GET', '/dashboard/live-globe');
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertSame(0, $data['online']);
+        $this->assertSame([], $data['feed'], 'the "who\'s online" feed must not show activity older than the online window');
+    }
+
+    public function testOverviewShowsAllTimeVisitsAndSevenDayCountryBreakdown(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser());
+
+        $this->insertPageview('session-recent', 'FR', '/', '-1 day');
+        $this->insertPageview('session-old', 'US', '/', '-10 days');
+
+        $crawler = $client->request('GET', '/dashboard');
+
+        $this->assertResponseIsSuccessful();
+        // All-time total includes both, regardless of the 7-day breakdown below.
+        $this->assertStringContainsString('2 visites', trim($crawler->filter('[data-globe="all-time-visits"]')->text()));
+
+        $countryItems = $crawler->filter('[data-globe="country-breakdown-item"]');
+        $this->assertCount(1, $countryItems, 'only the pageview from the last 7 days should appear in the breakdown');
+        $this->assertStringContainsString('FR', $countryItems->eq(0)->text());
+    }
+
+    public function testUnresolvedGeoIpIsExcludedFromCountryBreakdownAndFeedLabel(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser());
+
+        $this->connection->insert('analytics_events', [
+            'site_id' => $this->siteId,
+            'path' => '/',
+            'country' => null,
+            'session_id' => 'session-unresolved',
+            'occurred_at' => (new \DateTimeImmutable('-1 minute'))->format('Y-m-d H:i:s'),
+            'event_type' => 'pageview',
+        ]);
+
+        $crawler = $client->request('GET', '/dashboard');
+
+        $this->assertResponseIsSuccessful();
+        // No resolved country at all this period: the breakdown shouldn't render
+        // a "??" placeholder row for the unresolved bucket.
+        $this->assertCount(0, $crawler->filter('[data-globe="country-breakdown-item"]'));
+
+        $feedItem = $crawler->filter('[data-globe="feed-item"]')->eq(0)->text();
+        $this->assertStringNotContainsString('??', $feedItem);
+    }
+
+    private function insertPageview(string $sessionId, string $country, string $path, string $when): void
+    {
+        $this->connection->insert('analytics_events', [
+            'site_id' => $this->siteId,
+            'path' => $path,
+            'country' => $country,
+            'session_id' => $sessionId,
+            'occurred_at' => (new \DateTimeImmutable($when))->format('Y-m-d H:i:s'),
+            'event_type' => 'pageview',
+        ]);
+    }
+
     private function createLoggedInUser(): IdentityUser
     {
         $container = static::getContainer();

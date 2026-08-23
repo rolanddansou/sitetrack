@@ -34,12 +34,6 @@ class AnalyticsController extends AbstractController
         '30d' => ['daily'],
     ];
 
-    /** Columns that {@see groupBy()} is allowed to select — never build this from request input. */
-    private const GROUPABLE_COLUMNS = ['referrer', 'utm_campaign', 'path', 'country', 'region', 'city', 'browser', 'os', 'device'];
-
-    /** "Online now" is a recent-activity proxy, not a real-time heartbeat — event.js sends nothing while a visitor is idle on a page. */
-    private const ONLINE_WINDOW_MINUTES = 5;
-
     public function __construct(
         private CurrentTenantResolver $currentTenantResolver,
         private TenantRepositoryInterface $tenantRepository,
@@ -77,23 +71,23 @@ class AnalyticsController extends AbstractController
             'pageviews' => $pageviews,
             'bounceRate' => $bounceRate,
             'avgSessionDuration' => $this->formatDuration($sessionDurationSeconds),
-            'onlineNow' => $this->countOnlineNow($siteId),
+            'onlineNow' => $this->analyticsQuery->countOnlineNow($siteId),
             'visitorsDelta' => $this->calculateDelta($uniqueVisitors, $prevUniqueVisitors),
             'pageviewsDelta' => $this->calculateDelta($pageviews, $this->analyticsQuery->countPageviews($siteId, $prevStart, $prevEnd)),
             'bounceRateDelta' => $this->calculateDelta($bounceRate, $this->analyticsQuery->calculateBounceRate($siteId, $prevStart, $prevEnd, $prevUniqueVisitors), lowerIsBetter: true),
             'sessionTimeDelta' => $this->calculateDelta($sessionDurationSeconds, $this->calculateAvgSessionDuration($siteId, $prevStart, $prevEnd)),
             'chartData' => $this->buildTimeSeries($siteId, $start, $end, $granularity),
             'channels' => $this->buildChannelChartData($siteId, $start, $end),
-            'topReferrers' => $this->groupBy($siteId, $start, $end, 'referrer'),
-            'topCampaigns' => $this->groupBy($siteId, $start, $end, 'utm_campaign'),
-            'topPages' => $this->groupBy($siteId, $start, $end, 'path'),
+            'topReferrers' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'referrer'),
+            'topCampaigns' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'utm_campaign'),
+            'topPages' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'path'),
             'entryPages' => $this->buildEntryPages($siteId, $start, $end),
-            'countries' => $this->groupBy($siteId, $start, $end, 'country'),
-            'regions' => $this->groupBy($siteId, $start, $end, 'region'),
-            'cities' => $this->groupBy($siteId, $start, $end, 'city'),
-            'browsers' => $this->groupBy($siteId, $start, $end, 'browser'),
-            'oses' => $this->groupBy($siteId, $start, $end, 'os'),
-            'devices' => $this->groupBy($siteId, $start, $end, 'device'),
+            'countries' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'country'),
+            'regions' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'region'),
+            'cities' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'city'),
+            'browsers' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'browser'),
+            'oses' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'os'),
+            'devices' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'device'),
         ]);
     }
 
@@ -105,7 +99,7 @@ class AnalyticsController extends AbstractController
             throw $this->createNotFoundException('Tenant not found');
         }
 
-        return new JsonResponse(['count' => $this->countOnlineNow($tenant->getSiteId())]);
+        return new JsonResponse(['count' => $this->analyticsQuery->countOnlineNow($tenant->getSiteId())]);
     }
 
     private function resolvePeriod(string $period): string
@@ -238,21 +232,6 @@ class AnalyticsController extends AbstractController
         return sprintf('%dm%02ds', intdiv($seconds, 60), $seconds % 60);
     }
 
-    private function countOnlineNow(string $siteId): int
-    {
-        $cutoff = (new \DateTimeImmutable(sprintf('-%d minutes', self::ONLINE_WINDOW_MINUTES)))->format('Y-m-d H:i:s');
-
-        return (int) $this->connection->createQueryBuilder()
-            ->select('COUNT(DISTINCT session_id)')
-            ->from('analytics_events')
-            ->where('site_id = :siteId')
-            ->andWhere('occurred_at >= :cutoff')
-            ->setParameter('siteId', $siteId)
-            ->setParameter('cutoff', $cutoff)
-            ->executeQuery()
-            ->fetchOne();
-    }
-
     /**
      * @return array{labels: array<int, string>, datasets: array<int, array<string, mixed>>}
      */
@@ -286,8 +265,8 @@ class AnalyticsController extends AbstractController
             'datasets' => [[
                 'label' => 'Visitors',
                 'data' => $data,
-                'borderColor' => '#4f46e5',
-                'backgroundColor' => 'rgba(79, 70, 229, 0.1)',
+                'borderColor' => '#0E7C6B',
+                'backgroundColor' => 'rgba(14, 124, 107, 0.1)',
                 'fill' => true,
                 'tension' => 0.3,
             ]],
@@ -314,43 +293,19 @@ class AnalyticsController extends AbstractController
         arsort($channels);
 
         $palette = [
-            'Direct' => '#94a3b8',
-            'Organic Search' => '#4f46e5',
-            'Organic Social' => '#22c55e',
-            'Referral' => '#f59e0b',
+            'Direct' => '#9AA69E',
+            'Organic Search' => '#0E7C6B',
+            'Organic Social' => '#4C8577',
+            'Referral' => '#C15A2B',
         ];
 
         return [
             'labels' => array_keys($channels),
             'datasets' => [[
                 'data' => array_values($channels),
-                'backgroundColor' => array_map(static fn (string $label) => $palette[$label] ?? '#cbd5e1', array_keys($channels)),
+                'backgroundColor' => array_map(static fn (string $label) => $palette[$label] ?? '#D7DDD5', array_keys($channels)),
             ]],
         ];
-    }
-
-    /**
-     * @return array<int, array{label: string, count: int}>
-     */
-    private function groupBy(string $siteId, \DateTimeImmutable $start, \DateTimeImmutable $end, string $column): array
-    {
-        if (!in_array($column, self::GROUPABLE_COLUMNS, true)) {
-            throw new \InvalidArgumentException(sprintf('Column "%s" is not groupable.', $column));
-        }
-
-        $rows = $this->analyticsQuery->baseQuery($siteId, $start, $end)
-            ->select(sprintf('%s as label, COUNT(*) as count', $column))
-            ->groupBy($column)
-            ->orderBy('count', 'DESC')
-            ->setMaxResults(10)
-            ->executeQuery()
-            ->fetchAllAssociative();
-
-        foreach ($rows as &$row) {
-            $row['count'] = (int) $row['count'];
-        }
-
-        return $rows;
     }
 
     /**
