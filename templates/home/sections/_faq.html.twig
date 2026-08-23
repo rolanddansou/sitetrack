@@ -1,0 +1,14 @@
+<section id="faq" class="py-20 bg-slate-50">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% import 'components/_macros.html.twig' as m %}
+        {{ m.section_heading('FAQ', 'Frequently asked questions') }}
+
+        <div class="mt-12">
+            {{ m.faq_item('How does the SMTP deliverability check actually work?', 'We send a real email through your SMTP server to a verification mailbox we control, then confirm it arrived — measuring delivery time and checking SPF, DKIM, DMARC, and spam score. It catches problems a simple uptime check never would, like an expired DKIM key or a port silently blocked by your host.') }}
+            {{ m.faq_item('Is the analytics really cookie-less?', 'Yes. We generate a session identifier from a daily-rotating hash — no cookies are set, and no visitor data is sold or shared. You typically won\'t need a cookie consent banner for it.') }}
+            {{ m.faq_item('Which alert channels are supported?', 'Email, Slack, and Telegram today. Each alert rule has its own cooldown so a flapping check doesn\'t flood your channel with repeat notifications.') }}
+            {{ m.faq_item('Do I need to install anything on my server?', 'No. Uptime checks are external HTTP requests; the analytics script is a single small `<script>` tag you add to your site.') }}
+            {{ m.faq_item('Can I monitor more than one site?', 'Yes — how many depends on your plan. See the pricing section above.') }}
+        </div>
+    </div>
+</section>

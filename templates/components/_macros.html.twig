@@ -1,0 +1,89 @@
+{# Reusable UI atoms. Rule: a macro if it's invoked more than once with
+   different data; a plain {% include %} for a one-off page section. #}
+
+{% macro button(label, href, variant = 'primary') %}
+    {% set base = 'inline-flex items-center justify-center px-5 py-2.5 border text-sm font-semibold rounded-md shadow-sm transition-colors' %}
+    {% set styles = {
+        primary: 'border-transparent text-white bg-indigo-600 hover:bg-indigo-700',
+        secondary: 'border-slate-300 text-slate-700 bg-white hover:bg-slate-50'
+    } %}
+    <a href="{{ href }}" class="{{ base }} {{ styles[variant] }}">{{ label }}</a>
+{% endmacro %}
+
+{% macro section_heading(eyebrow, title, subtitle = null) %}
+    <div class="max-w-2xl mx-auto text-center">
+        <p class="text-sm font-semibold text-indigo-600 tracking-wide uppercase">{{ eyebrow }}</p>
+        <h2 class="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{{ title }}</h2>
+        {% if subtitle %}
+            <p class="mt-4 text-lg text-slate-500">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% macro feature_card(icon, title, description, highlight = false) %}
+    <div class="bg-white shadow-sm rounded-lg border {{ highlight ? 'border-indigo-200 ring-1 ring-indigo-100' : 'border-slate-200' }} p-6">
+        <div class="w-10 h-10 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            {{ ux_icon(icon, {class: 'w-5 h-5'}) }}
+        </div>
+        <h3 class="mt-4 text-base font-semibold text-slate-900">{{ title }}</h3>
+        <p class="mt-2 text-sm text-slate-500">{{ description }}</p>
+    </div>
+{% endmacro %}
+
+{% macro stat_card(value, label) %}
+    <div class="bg-white shadow-sm rounded-lg border border-slate-200 px-6 py-5 text-center">
+        <p class="text-2xl font-bold text-slate-900">{{ value }}</p>
+        <p class="mt-1 text-sm text-slate-500">{{ label }}</p>
+    </div>
+{% endmacro %}
+
+{% macro testimonial_card(quote, name, handle) %}
+    <div class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">
+        <p class="text-sm text-slate-700">&ldquo;{{ quote }}&rdquo;</p>
+        <div class="mt-4">
+            <p class="text-sm font-semibold text-slate-900">{{ name }}</p>
+            <p class="text-sm text-slate-500">{{ handle }}</p>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro pricing_card(name, price, period, features, cta_label, cta_href, featured = false) %}
+    <div class="bg-white rounded-lg border {{ featured ? 'border-indigo-600 ring-2 ring-indigo-600' : 'border-slate-200' }} shadow-sm p-8 flex flex-col">
+        {% if featured %}
+            <span class="self-start mb-4 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Most popular</span>
+        {% endif %}
+        <h3 class="text-lg font-semibold text-slate-900">{{ name }}</h3>
+        <p class="mt-4 flex items-baseline">
+            <span class="text-4xl font-bold tracking-tight text-slate-900">{{ price }}</span>
+            <span class="ml-1 text-sm text-slate-500">/{{ period }}</span>
+        </p>
+        <ul class="mt-6 space-y-3 flex-1">
+            {% for feature in features %}
+                <li class="flex items-start gap-2 text-sm text-slate-600">
+                    {{ ux_icon('heroicons:check', {class: 'w-5 h-5 text-indigo-600 shrink-0'}) }}
+                    <span>{{ feature }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+        <a href="{{ cta_href }}" class="mt-8 inline-flex items-center justify-center px-5 py-2.5 rounded-md text-sm font-semibold shadow-sm {{ featured ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50' }}">
+            {{ cta_label }}
+        </a>
+    </div>
+{% endmacro %}
+
+{% macro faq_item(question, answer) %}
+    <div class="border-b border-slate-200 py-5" data-controller="accordion">
+        <button type="button"
+                class="flex w-full items-center justify-between text-left gap-4"
+                aria-expanded="false"
+                data-action="click->accordion#toggle">
+            <span class="text-sm font-semibold text-slate-900">{{ question }}</span>
+            <span data-accordion-target="icon" class="shrink-0 text-slate-400 transition-transform duration-200">
+                {{ ux_icon('heroicons:chevron-down', {class: 'w-5 h-5'}) }}
+            </span>
+        </button>
+        <div data-accordion-target="content" class="mt-2 pr-8 text-sm text-slate-500 hidden">
+            {{ answer }}
+        </div>
+    </div>
+{% endmacro %}

@@ -13,7 +13,7 @@
     </div>
 
     <div class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">
-        <form method="POST" action="{{ path('monitor_new') }}" class="space-y-6">
+        <form method="POST" action="{{ path('monitor_new') }}" class="space-y-6" data-controller="monitor-type">
             <div>
                 <label for="name" class="block text-sm font-semibold text-slate-700">Monitor Name</label>
                 <input type="text" name="name" id="name" value="{{ dto.name }}" required
@@ -25,7 +25,7 @@
 
             <div>
                 <label for="type" class="block text-sm font-semibold text-slate-700">Monitor Type</label>
-                <select name="type" id="type" onchange="toggleTypeFields()"
+                <select name="type" id="type" data-monitor-type-target="typeSelect" data-action="change->monitor-type#toggle"
                         class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
                     <option value="http" {{ dto.type == 'http' ? 'selected' : '' }}>HTTP(S) Ping</option>
                     <option value="smtp" {{ dto.type == 'smtp' ? 'selected' : '' }}>SMTP Deliverability Check</option>
@@ -36,10 +36,10 @@
             </div>
 
             <div>
-                <label id="target-label" for="target" class="block text-sm font-semibold text-slate-700">Target URL</label>
+                <label data-monitor-type-target="targetLabel" for="target" class="block text-sm font-semibold text-slate-700">Target URL</label>
                 <input type="text" name="target" id="target" value="{{ dto.target }}" required
                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
-                <span id="target-help" class="text-xs text-slate-400 mt-1 block"></span>
+                <span data-monitor-type-target="targetHelp" class="text-xs text-slate-400 mt-1 block"></span>
                 {% if errors.target is defined %}
                     <p class="mt-1 text-xs text-red-600">{{ errors.target }}</p>
                 {% endif %}
@@ -61,7 +61,7 @@
             </div>
 
             {# HTTP Specific Fields #}
-            <div id="http-fields" class="space-y-6">
+            <div data-monitor-type-target="httpFields" class="space-y-6">
                 <div class="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
                     <div>
                         <label for="expected_status" class="block text-sm font-semibold text-slate-700">Expected HTTP Status</label>
@@ -85,7 +85,7 @@
             </div>
 
             {# SMTP Specific Fields #}
-            <div id="smtp-fields" class="space-y-6 hidden">
+            <div data-monitor-type-target="smtpFields" class="space-y-6 hidden">
                 <div class="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
                     <div>
                         <label for="smtp_username" class="block text-sm font-semibold text-slate-700">SMTP Username / Email</label>
@@ -130,28 +130,4 @@
         </form>
     </div>
 </div>
-
-<script>
-function toggleTypeFields() {
-    const type = document.getElementById('type').value;
-    const httpFields = document.getElementById('http-fields');
-    const smtpFields = document.getElementById('smtp-fields');
-    const label = document.getElementById('target-label');
-    const help = document.getElementById('target-help');
-
-    if (type === 'http') {
-        httpFields.classList.remove('hidden');
-        smtpFields.classList.add('hidden');
-        label.textContent = "Target URL";
-        help.textContent = "Example: https://your-website.com/health";
-    } else {
-        httpFields.classList.add('hidden');
-        smtpFields.classList.remove('hidden');
-        label.textContent = "SMTP Server Host & Port";
-        help.textContent = "Example: smtp.postmarkapp.com:587";
-    }
-}
-// Init fields on load
-toggleTypeFields();
-</script>
 {% endblock %}

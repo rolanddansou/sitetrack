@@ -6,13 +6,9 @@
         <title>{% block title %}SiteTrack - Solopreneur Ops Suite{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>📡</text></svg>">
         
-        {% block stylesheets %}
-            <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
-        {% endblock %}
+        {% block stylesheets %}{% include 'components/_stylesheets.html.twig' %}{% endblock %}
 
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-        {% endblock %}
+        {% block javascripts %}{% block importmap %}{% include 'components/_importmap.html.twig' %}{% endblock %}{% endblock %}
     </head>
     <body class="h-full flex flex-col font-sans antialiased">
         <header class="bg-white border-b border-slate-200 shrink-0">

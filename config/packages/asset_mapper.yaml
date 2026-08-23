@@ -4,6 +4,11 @@ framework:
         paths:
             - assets/
         missing_import_mode: strict
+        # Tailwind CLI's build *input* — its `@import "tailwindcss"` isn't a
+        # real relative file, so AssetMapper can't resolve it. Only the
+        # compiled assets/styles/app.css is ever actually served.
+        excluded_patterns:
+            - '*/assets/styles/src.css'
 
 when@prod:
     framework:

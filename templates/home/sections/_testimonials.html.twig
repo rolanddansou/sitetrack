@@ -1,0 +1,13 @@
+{# TODO: replace every card below with a real customer testimonial #}
+<section class="py-20 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% import 'components/_macros.html.twig' as m %}
+        {{ m.section_heading('Loved by solopreneurs', 'What early users are saying') }}
+
+        <div class="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {{ m.testimonial_card('Finally caught an SMTP misconfiguration before a customer complained about a missing invoice. That alone paid for the year.', 'Placeholder Name', '@placeholder') }}
+            {{ m.testimonial_card('Replaced two subscriptions with one and the dashboard is actually simpler than either of them was alone.', 'Placeholder Name', '@placeholder') }}
+            {{ m.testimonial_card('The cookie-less analytics means I don\'t need a consent banner anymore. One less thing to maintain.', 'Placeholder Name', '@placeholder') }}
+        </div>
+    </div>
+</section>

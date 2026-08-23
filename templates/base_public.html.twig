@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html class="h-full bg-white text-slate-800">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}SiteTrack — Ops Health Suite for Solopreneurs{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>📡</text></svg>">
+
+        {% block stylesheets %}{% include 'components/_stylesheets.html.twig' %}{% endblock %}
+        {% block javascripts %}{% include 'components/_importmap.html.twig' %}{% endblock %}
+
+        <script src="{{ app.request.schemeAndHttpHost }}/collect/event.js" data-site="86816387f5d4fdd1" async></script>
+    </head>
+    <body class="h-full flex flex-col font-sans antialiased">
+        {% include 'home/_header.html.twig' %}
+
+        <main class="flex-1">
+            {% block body %}{% endblock %}
+        </main>
+
+        {% include 'home/_footer.html.twig' %}
+    </body>
+</html>

@@ -1,0 +1,24 @@
+<section id="how-it-works" class="py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% import 'components/_macros.html.twig' as m %}
+        {{ m.section_heading('How it works', 'Set up once, get out of the way') }}
+
+        <div class="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-10">
+            <div class="text-center">
+                <div class="mx-auto w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold">1</div>
+                <h3 class="mt-4 text-base font-semibold text-slate-900">Add your site</h3>
+                <p class="mt-2 text-sm text-slate-500">Point SiteTrack at your URL (and your SMTP server, if you want deliverability checks too).</p>
+            </div>
+            <div class="text-center">
+                <div class="mx-auto w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold">2</div>
+                <h3 class="mt-4 text-base font-semibold text-slate-900">Configure alerts</h3>
+                <p class="mt-2 text-sm text-slate-500">Pick a channel — email, Slack, or Telegram — and a threshold. We handle cooldowns automatically.</p>
+            </div>
+            <div class="text-center">
+                <div class="mx-auto w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold">3</div>
+                <h3 class="mt-4 text-base font-semibold text-slate-900">Get notified, not surprised</h3>
+                <p class="mt-2 text-sm text-slate-500">We check on your schedule and tell you the moment something breaks — before your customers do.</p>
+            </div>
+        </div>
+    </div>
+</section>

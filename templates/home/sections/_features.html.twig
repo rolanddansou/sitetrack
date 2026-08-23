@@ -1,0 +1,13 @@
+<section id="features" class="py-20 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% import 'components/_macros.html.twig' as m %}
+        {{ m.section_heading('Features', 'Everything your site\'s health depends on', 'Four tools, one dashboard, no context switching.') }}
+
+        <div class="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {{ m.feature_card('heroicons:signal', 'Uptime monitoring', 'HTTP(S) checks on the schedule you choose — status code, response time, and an optional regex match on the response body.') }}
+            {{ m.feature_card('heroicons:envelope', 'SMTP deliverability', 'The check nobody else offers standalone: we send a real test email through your SMTP server and confirm it actually arrives, with SPF/DKIM/DMARC and spam-score results.', true) }}
+            {{ m.feature_card('heroicons:bell-alert', 'Smart alerting', 'Email, Slack, or Telegram — with cooldowns so one incident doesn\'t become fifty notifications.') }}
+            {{ m.feature_card('heroicons:chart-bar', 'Privacy-first analytics', 'Cookie-less pageview and event tracking. No cookie banner needed, no visitor data sold, ever.') }}
+        </div>
+    </div>
+</section>
