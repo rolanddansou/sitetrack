@@ -10,6 +10,7 @@
         </id>
         <field name="name" type="string" length="255"/>
         <field name="slug" type="string" length="255" unique="true"/>
+        <field name="siteId" type="string" length="32" column="site_id" unique="true"/>
         <field name="isActive" type="boolean" column="is_active"/>
         <field name="createdAt" type="datetime_immutable" column="created_at"/>
         <field name="updatedAt" type="datetime_immutable" column="updated_at" nullable="true"/>

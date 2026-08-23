@@ -11,16 +11,10 @@
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
     <!-- Left Panel: stats and script -->
     <div class="lg:col-span-1 space-y-6">
-        <!-- Site Selection / Info -->
+        <!-- Site ID (generated once per tenant, not user-editable) -->
         <div class="bg-white shadow-sm rounded-lg border border-slate-200 p-6">
-            <label for="site_id_select" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tracked Site ID</label>
-            <form method="GET" action="{{ path('analytics_index') }}" class="flex gap-2">
-                <input type="text" name="site_id" id="site_id_select" value="{{ siteId }}" required
-                       class="block w-full rounded border-slate-300 text-xs p-2 border">
-                <button type="submit" class="inline-flex items-center px-3 py-2 border border-transparent text-xs font-semibold rounded text-white bg-indigo-600 hover:bg-indigo-700">
-                    Filter
-                </button>
-            </form>
+            <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tracked Site ID</span>
+            <code class="block w-full rounded bg-slate-50 border border-slate-200 text-xs p-2 text-slate-700">{{ siteId }}</code>
         </div>
 
         <!-- Ingestion stats card -->
@@ -40,7 +34,7 @@
             <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Install script</h3>
             <p class="text-xs text-slate-400 mb-4">Paste this lightweight tracking script into the <code>&lt;head&gt;</code> of your website.</p>
             <div class="bg-slate-800 text-slate-300 font-mono text-[10px] p-3 rounded overflow-x-auto leading-relaxed border border-slate-900">
-                &lt;script src="{{ app.request.schemeAndHttpHost }}/tracker.js" data-site-id="{{ siteId }}" async&gt;&lt;/script&gt;
+                &lt;script src="{{ app.request.schemeAndHttpHost }}/collect/event.js" data-site="{{ siteId }}" async&gt;&lt;/script&gt;
             </div>
         </div>
     </div>

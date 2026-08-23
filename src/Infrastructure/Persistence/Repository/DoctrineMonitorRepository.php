@@ -17,6 +17,11 @@ class DoctrineMonitorRepository implements MonitorRepositoryInterface
         return $this->entityManager->find(Monitor::class, $id);
     }
 
+    public function findByPublicId(string $publicId): ?Monitor
+    {
+        return $this->entityManager->getRepository(Monitor::class)->findOneBy(['publicId' => $publicId]);
+    }
+
     public function findActiveMonitors(): array
     {
         return $this->entityManager->createQueryBuilder()

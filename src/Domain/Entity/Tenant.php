@@ -9,6 +9,7 @@ class Tenant
     private ?int $id = null;
     private string $name;
     private string $slug;
+    private string $siteId;
     private bool $isActive = true;
     private \DateTimeImmutable $createdAt;
     private ?\DateTimeImmutable $updatedAt = null;
@@ -17,6 +18,7 @@ class Tenant
     {
         $this->name = $name;
         $this->slug = $slug;
+        $this->siteId = bin2hex(random_bytes(8));
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -51,6 +53,11 @@ class Tenant
     {
         $this->slug = $slug;
         return $this;
+    }
+
+    public function getSiteId(): string
+    {
+        return $this->siteId;
     }
 
     public function isActive(): bool

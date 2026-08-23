@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Entity;
 
+use Symfony\Component\Uid\Uuid;
+
 class Monitor
 {
     private ?int $id = null;
+    private string $publicId;
     private int $tenantId;
     private string $name;
     private string $type; // 'http' or 'smtp'
@@ -27,6 +30,7 @@ class Monitor
         string $target,
         int $interval = 5
     ) {
+        $this->publicId = Uuid::v4()->toRfc4122();
         $this->tenantId = $tenantId;
         $this->name = $name;
         $this->type = $type;
@@ -44,6 +48,11 @@ class Monitor
     {
         $this->id = $id;
         return $this;
+    }
+
+    public function getPublicId(): string
+    {
+        return $this->publicId;
     }
 
     public function getTenantId(): int

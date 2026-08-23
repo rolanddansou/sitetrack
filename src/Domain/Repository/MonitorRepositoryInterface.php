@@ -10,6 +10,8 @@ interface MonitorRepositoryInterface
 {
     public function find(int $id): ?Monitor;
 
+    public function findByPublicId(string $publicId): ?Monitor;
+
     /**
      * @return Monitor[]
      */

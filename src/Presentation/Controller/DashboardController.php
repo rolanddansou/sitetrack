@@ -13,6 +13,7 @@ use App\Domain\Repository\CheckResultRepositoryInterface;
 use App\Domain\Repository\MonitorRepositoryInterface;
 use App\Domain\Repository\SmtpTestRepositoryInterface;
 use App\Domain\Repository\TenantMembershipRepositoryInterface;
+use App\Domain\Repository\TenantRepositoryInterface;
 use App\Domain\Service\PasswordEncryptorInterface;
 use App\Infrastructure\Security\IdentityUser;
 use App\Infrastructure\Security\MonitorVoter;
@@ -32,6 +33,7 @@ class DashboardController extends AbstractController
         private SmtpTestRepositoryInterface $smtpTestRepository,
         private AlertRuleRepositoryInterface $alertRuleRepository,
         private TenantMembershipRepositoryInterface $tenantMembershipRepository,
+        private TenantRepositoryInterface $tenantRepository,
         private PasswordEncryptorInterface $passwordEncryptor,
         private ValidatorInterface $validator,
         private Connection $connection
@@ -51,7 +53,7 @@ class DashboardController extends AbstractController
         return $memberships[0]->getTenantId();
     }
 
-    #[Route('/', name: 'dashboard_index')]
+    #[Route('/dashboard', name: 'dashboard_index')]
     public function index(): Response
     {
         $monitors = $this->monitorRepository->findActiveMonitorsByTenant($this->currentTenantId());
@@ -141,15 +143,16 @@ class DashboardController extends AbstractController
         ]);
     }
 
-    #[Route('/monitor/{id}', name: 'monitor_show', methods: ['GET'])]
-    public function show(int $id): Response
+    #[Route('/monitor/{publicId}', name: 'monitor_show', methods: ['GET'])]
+    public function show(string $publicId): Response
     {
-        $monitor = $this->monitorRepository->find($id);
+        $monitor = $this->monitorRepository->findByPublicId($publicId);
         if ($monitor === null) {
             throw $this->createNotFoundException('Monitor not found');
         }
         $this->denyAccessUnlessGranted(MonitorVoter::MONITOR_ACCESS, $monitor);
 
+        $id = $monitor->getId();
         $recentChecks = $this->checkResultRepository->findRecentResults($id, 50);
         $rules = $this->alertRuleRepository->findByMonitor($id);
 
@@ -186,10 +189,10 @@ class DashboardController extends AbstractController
         ]);
     }
 
-    #[Route('/monitor/{id}/delete', name: 'monitor_delete', methods: ['POST'])]
-    public function delete(int $id): RedirectResponse
+    #[Route('/monitor/{publicId}/delete', name: 'monitor_delete', methods: ['POST'])]
+    public function delete(string $publicId): RedirectResponse
     {
-        $monitor = $this->monitorRepository->find($id);
+        $monitor = $this->monitorRepository->findByPublicId($publicId);
         if ($monitor !== null) {
             $this->denyAccessUnlessGranted(MonitorVoter::MONITOR_ACCESS, $monitor);
             $this->monitorRepository->delete($monitor);
@@ -198,10 +201,10 @@ class DashboardController extends AbstractController
         return $this->redirectToRoute('dashboard_index');
     }
 
-    #[Route('/monitor/{id}/rule/new', name: 'rule_new', methods: ['POST'])]
-    public function newRule(int $id, Request $request): RedirectResponse
+    #[Route('/monitor/{publicId}/rule/new', name: 'rule_new', methods: ['POST'])]
+    public function newRule(string $publicId, Request $request): RedirectResponse
     {
-        $monitor = $this->monitorRepository->find($id);
+        $monitor = $this->monitorRepository->findByPublicId($publicId);
         if ($monitor === null) {
             throw $this->createNotFoundException('Monitor not found');
         }
@@ -219,7 +222,7 @@ class DashboardController extends AbstractController
             $this->addFlash('error', 'Invalid alert rule configuration.');
         } else {
             $rule = new AlertRule(
-                monitorId: $id,
+                monitorId: $monitor->getId(),
                 conditionType: $dto->conditionType,
                 threshold: $dto->threshold,
                 channel: $dto->channel,
@@ -230,22 +233,17 @@ class DashboardController extends AbstractController
             $this->addFlash('success', 'Alert rule added.');
         }
 
-        return $this->redirectToRoute('monitor_show', ['id' => $id]);
+        return $this->redirectToRoute('monitor_show', ['publicId' => $publicId]);
     }
 
     #[Route('/analytics', name: 'analytics_index', methods: ['GET'])]
-    public function analytics(Request $request): Response
+    public function analytics(): Response
     {
-        $siteId = $request->query->get('site_id');
-        if (!$siteId) {
-            $firstSite = $this->connection->createQueryBuilder()
-                ->select('site_id')
-                ->from('analytics_events')
-                ->setMaxResults(1)
-                ->executeQuery()
-                ->fetchOne();
-            $siteId = $firstSite ?: 'demo';
+        $tenant = $this->tenantRepository->find($this->currentTenantId());
+        if ($tenant === null) {
+            throw $this->createNotFoundException('Tenant not found');
         }
+        $siteId = $tenant->getSiteId();
 
         $uniqueVisitors = (int) $this->connection->createQueryBuilder()
             ->select('COUNT(DISTINCT session_id)')

@@ -42,6 +42,31 @@ class CachedMonitorRepository implements MonitorRepositoryInterface
         }
     }
 
+    public function findByPublicId(string $publicId): ?Monitor
+    {
+        $cacheKey = sprintf('monitor_public_%s', $publicId);
+
+        try {
+            $item = $this->cache->getItem($cacheKey);
+            if ($item->isHit()) {
+                return $item->get();
+            }
+
+            $monitor = $this->delegate->findByPublicId($publicId);
+            if ($monitor !== null) {
+                $item->set($monitor);
+                $item->expiresAfter(300); // 5 minutes
+                $this->cache->save($item);
+            }
+            return $monitor;
+        } catch (\Throwable $e) {
+            if ($this->logger !== null) {
+                $this->logger->warning(sprintf('Cache failure in CachedMonitorRepository::findByPublicId: %s. Falling back to database.', $e->getMessage()));
+            }
+            return $this->delegate->findByPublicId($publicId);
+        }
+    }
+
     public function findActiveMonitors(): array
     {
         $cacheKey = 'active_monitors';
@@ -106,6 +131,7 @@ class CachedMonitorRepository implements MonitorRepositoryInterface
             if ($monitor->getId() !== null) {
                 $this->cache->deleteItem(sprintf('monitor_%d', $monitor->getId()));
             }
+            $this->cache->deleteItem(sprintf('monitor_public_%s', $monitor->getPublicId()));
             $this->cache->deleteItem('active_monitors');
             $this->cache->deleteItem(sprintf('active_monitors_tenant_%d', $monitor->getTenantId()));
         } catch (\Throwable $e) {

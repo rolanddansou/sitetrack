@@ -8,6 +8,7 @@
         <id name="id" type="integer">
             <generator strategy="AUTO"/>
         </id>
+        <field name="publicId" type="string" length="36" column="public_id" unique="true"/>
         <field name="tenantId" type="integer" column="tenant_id"/>
         <field name="name" type="string" length="255"/>
         <field name="type" type="string" length="50"/>
