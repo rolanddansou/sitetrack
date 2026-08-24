@@ -1,13 +1,6 @@
-# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
-
-# This file is the entry point to configure your own services.
-# Files in the packages/ subdirectory configure your dependencies.
-# See also https://symfony.com/doc/current/service_container/import.html
-
-# Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     geoip.default_db_path: '%kernel.project_dir%/var/geoip/GeoLite2-City.mmdb'
+    app_name: '%env(APP_NAME)%'
 
 services:
     # default configuration for services in *this* file
@@ -60,4 +53,44 @@ services:
 
     App\Domain\Service\UserAgentParserInterface:
         alias: App\Infrastructure\Http\UaParserUserAgentParser
+
+
+    # Mailer pour les alertes d'erreurs (séparé du mailer principal)
+    error_mailer:
+        class: Symfony\Component\Mailer\Mailer
+        arguments:
+            - '@error_mailer.transport'
+
+    error_mailer.transport:
+        class: Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport
+        factory: [ '@mailer.transport_factory', 'fromString' ]
+        arguments:
+            - '%env(MAILER_DSN_ERRORS)%'
+
+    # Compte les requêtes SQL de la requête HTTP courante (PerformanceSubscriber) —
+    # Doctrine\DBAL\Logging\Middleware appelle QueryCounter::log() une fois par
+    # requête SQL ; auto-tagué "doctrine.middleware" par DoctrineBundle
+    # (registerForAutoconfiguration sur Middleware) et donc appliqué à la
+    # connexion par défaut sans configuration supplémentaire dans doctrine.yaml.
+    Doctrine\DBAL\Logging\Middleware:
+        arguments:
+            $logger: '@App\Infrastructure\Monitoring\QueryCounter'
+
+    # Monitoring - ErrorMonitoringSubscriber avec loggers spécifiques
+    App\Infrastructure\Monitoring\ErrorMonitoringSubscriber:
+        arguments:
+            $logger: '@monolog.logger'
+            $securityLogger: '@monolog.logger.security'
+            $businessLogger: '@monolog.logger.business'
+            $security: '@security.helper'
+            $environment: '%kernel.environment%'
+
+    App\Infrastructure\Monitoring\PerformanceSubscriber:
+        arguments:
+            $performanceLogger: '@monolog.logger.performance'
+            $security: '@security.helper'
+            $debug: '%kernel.debug%'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
 

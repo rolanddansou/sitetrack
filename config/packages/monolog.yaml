@@ -1,0 +1,122 @@
+monolog:
+    channels:
+        - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+        - ai_agent    # Dedicated channel for AI agent activity (LLM calls, RAG, skills, indexation)
+        - performance
+        - security
+        - business
+
+when@dev:
+    monolog:
+        handlers:
+            main:
+                type: stream
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug
+                channels: ["!event"]
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ["!event", "!doctrine", "!console"]
+            ai_agent:
+                type: stream
+                path: "%kernel.logs_dir%/ai_agent.log"
+                level: debug
+                channels: [ai_agent]
+            # Logs de sécurité séparés
+            security:
+                type: stream
+                path: "%kernel.logs_dir%/security.log"
+                level: info
+                channels: ["security"]
+when@test:
+    monolog:
+        handlers:
+            main:
+                type: fingers_crossed
+                action_level: error
+                handler: nested
+                excluded_http_codes: [404, 405]
+                channels: ["!event"]
+            nested:
+                type: stream
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug
+
+when@prod:
+    monolog:
+        handlers:
+            main:
+                type: fingers_crossed
+                action_level: error
+                handler: nested
+                excluded_http_codes: [404, 405]
+                channels: ["!event", "!deprecation", "!security", "!business", "!performance", "!ai_agent"]
+                buffer_size: 50 # How many messages should be saved? Prevent memory leaks
+            nested:
+                type: stream
+                path: php://stderr
+                level: debug
+                formatter: monolog.formatter.json
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ["!event", "!doctrine"]
+            deprecation:
+                type: stream
+                channels: [deprecation]
+                path: php://stderr
+                formatter: monolog.formatter.json
+            ai_agent:
+                type: stream
+                path: php://stderr
+                level: info
+                channels: [ai_agent]
+                formatter: monolog.formatter.json
+
+            # Logs de sécurité avec rotation séparée
+            security:
+                type: rotating_file
+                path: "%kernel.logs_dir%/security.log"
+                level: info
+                max_files: 30
+                channels: ["security"]
+
+            # Logs business/métier avec rotation
+            business:
+                type: rotating_file
+                path: "%kernel.logs_dir%/business.log"
+                level: info
+                max_files: 15
+                channels: ["business"]
+
+            # Logs de performance
+            performance:
+                type: rotating_file
+                path: "%kernel.logs_dir%/performance.log"
+                level: info
+                max_files: 7
+                channels: ["performance"]
+
+            # Alertes ERROR -> ADMIN + SUPER_ADMIN
+            error_mailer:
+                type: fingers_crossed
+                action_level: error
+                handler: error_swift
+                buffer_size: 50
+                stop_buffering: false
+                excluded_http_codes: [404, 405, 410]
+                channels: ["!deprecation", "!event"]
+
+            # native_mailer would silently ignore `mailer:` and send through
+            # PHP's mail() instead of the error_mailer SMTP transport below —
+            # symfony_mailer is the handler type that actually honors it.
+            error_swift:
+                type: symfony_mailer
+                to_email: '%env(ADMIN_ALERT_EMAIL)%'
+                from_email: '%env(MAILER_ERRORS_FROM)%'
+                subject: '[ERROR] Application Error'
+                level: error
+                formatter: monolog.formatter.html
+                content_type: text/html
+                mailer: 'error_mailer'

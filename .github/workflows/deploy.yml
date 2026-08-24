@@ -1,0 +1,229 @@
+name: 🚀 Deploy to Production (OVH)
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  PHP_VERSION: '8.2'
+
+jobs:
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # JOB 1 — Tests & Audit
+  # ════════════════════════════════════════════════════════════════════════════
+  test:
+    name: ✅ Tests & Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          # pdo_sqlite est requis : la suite de tests tourne toujours sur SQLite
+          # (APP_ENV=test forcé par phpunit.dist.xml → .env.test → var/test_data.db).
+          extensions: intl, pdo_mysql, pdo_sqlite, opcache, mbstring, xml, ctype, iconv, dom, curl
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache Composer (dev)
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-dev-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-dev-
+
+      - name: Composer install (avec dépendances dev)
+        run: |
+          composer install \
+            --optimize-autoloader \
+            --no-interaction \
+            --prefer-dist \
+            --no-progress \
+            --no-scripts
+
+      - name: Audit de sécurité des dépendances
+        run: composer audit --no-interaction
+
+      # var/ est entièrement gitignored — le checkout de ce runner n'a pas de
+      # var/test_data.db, il faut créer le schéma avant de lancer les tests.
+      - name: Migrations Doctrine (base de test SQLite)
+        run: APP_ENV=test php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+
+      - name: PHPUnit
+        run: php bin/phpunit --testdox
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # JOB 2 — Build & Deploy
+  # ════════════════════════════════════════════════════════════════════════════
+  build-and-deploy:
+    name: 🔨🚀 Build & Deploy to OVH
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+
+      # ── 1. Checkout ───────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. PHP + Composer prod ────────────────────────────────────────────
+      - name: Setup PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_mysql, pdo_sqlite, opcache, mbstring, xml, ctype, iconv, dom, curl
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache Composer (prod)
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-prod-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-prod-
+
+      # --no-scripts : évite cache:clear en post-install (DebugBundle absent en --no-dev)
+      - name: Composer install (prod, sans dev)
+        run: |
+          composer install \
+            --no-dev \
+            --optimize-autoloader \
+            --no-interaction \
+            --prefer-dist \
+            --no-progress \
+            --no-scripts
+
+      # ── 3. Assets (asset-mapper) ──────────────────────────────────────────
+      # assets/styles/app.css (Tailwind) est déjà compilé et committé (npm run
+      # build fait partie du workflow de dev, voir CLAUDE.md) — rien à
+      # recompiler ici. importmap:install télécharge les packages JS déclarés
+      # dans importmap.php, asset-map:compile compile tout dans public/assets/
+      # pour la prod. public/assets/ est dans .gitignore mais PAS exclu du
+      # rsync ci-dessous : c'est justement ce dossier généré ici qu'on envoie.
+      - name: Compiler les assets (importmap + asset-mapper)
+        env:
+          APP_ENV: prod
+          APP_SECRET: placeholder
+          # SQLite en mémoire : Doctrine s'initialise sans tenter de connecter à la vraie base
+          DATABASE_URL: "sqlite:///:memory:"
+        run: |
+          php bin/console importmap:install --no-interaction --env=prod
+          php bin/console asset-map:compile --no-interaction --env=prod
+
+      # ── 4. rsync → OVH ───────────────────────────────────────────────────
+      # /var/ est exclu en bloc (et pas fichier par fichier) : le dossier est
+      # entièrement gitignored, donc absent du checkout de ce runner. Avec
+      # --delete, l'exclure en entier est ce qui protège var/data.db (la base
+      # SQLite de prod, si utilisée) et var/geoip/GeoLite2-City.mmdb (placé
+      # manuellement sur le serveur, voir CLAUDE.md) d'être supprimés à
+      # chaque déploiement — var/cache, var/log, var/sessions sont de toute
+      # façon recréés par l'étape SSH ci-dessous.
+      - name: Rsync — copie des fichiers vers OVH
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: >-
+            -avzr --delete --checksum
+            --exclude='.ssh/'
+            --exclude='.git/'
+            --exclude='.github/'
+            --exclude='.env.local'
+            --exclude='.env.local.php'
+            --exclude='.env.*.local'
+            --exclude='.env.dev'
+            --exclude='.env.test'
+            --exclude='config/secrets/prod/'
+            --exclude='var/'
+            --exclude='tests/'
+            --exclude='phpunit.dist.xml'
+            --exclude='phpunit.xml'
+            --exclude='.phpunit.cache/'
+            --exclude='.idea/'
+            --exclude='.vscode/'
+            --exclude='node_modules/'
+            --exclude='nul'
+            --exclude='tmpclaude-*'
+          path: ./
+          remote_path: ${{ secrets.DEPLOY_PATH }}
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT || 22 }}
+          remote_user: ${{ secrets.SSH_USER }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # ── 5. Post-déploiement SSH ───────────────────────────────────────────
+      # Rien ne tourne en continu sans supervision côté serveur (voir CLAUDE.md
+      # "No process supervisor is wired up yet") — à configurer une fois,
+      # hors de ce pipeline : UN SEUL cron toutes les minutes, zenstruck/
+      # schedule-bundle (src/Scheduler/AppScheduleBuilder.php) orchestre les
+      # tâches réelles (messenger:consume borné + app:poll-imap), chacune avec
+      # sa propre protection withoutOverlapping() :
+      #   * * * * * php bin/console schedule:run --env=prod >> var/log/schedule.log 2>&1
+      - name: Cache Symfony + Migrations Doctrine
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+        run: |
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+          ssh -i /tmp/deploy_key \
+            -p "${SSH_PORT}" \
+            -o StrictHostKeyChecking=no \
+            -o PasswordAuthentication=no \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=10 \
+            "${SSH_USER}@${SSH_HOST}" bash << ENDSSH
+          set -e
+          # Vérifie le chemin réel des binaires PHP 8.2 sur ton hébergement OVH
+          # mutualisé (peut différer selon le plan) : which php8.2 une fois connecté en SSH.
+          export PATH="/usr/local/php8.2/bin:\$PATH"
+          cd "${DEPLOY_PATH}"
+
+          # Vérifie que .env.local existe (requis pour booter le kernel prod).
+          # Doit contenir au minimum : APP_SECRET, DATABASE_URL, MAILER_DSN
+          # (sinon les alertes email ne partent jamais), IMAP_HOST/PORT/
+          # USERNAME/PASSWORD/SECURE, SITETRACK_TEST_EMAIL. GEOIP_DB_PATH est
+          # optionnel (les lookups GeoIP se no-opent silencieusement si absent).
+          if [ ! -f .env.local ]; then
+            echo "ERREUR : .env.local absent sur le serveur."
+            echo "Créez-le manuellement une fois avec toutes les vars de prod."
+            exit 1
+          fi
+
+          mkdir -p var/log var/sessions var/cache var/geoip
+
+          echo ">>> Cache clear"
+          php bin/console cache:clear --env=prod --no-debug --no-warmup 2>&1
+
+          echo ">>> Messenger — vérifie/crée la table messenger_messages (idempotent)"
+          php bin/console messenger:setup-transports --env=prod 2>&1
+
+          echo ">>> Migrations Doctrine"
+          php bin/console doctrine:migrations:migrate \
+            --no-interaction --allow-no-migration --env=prod 2>&1
+
+          echo ">>> Cache warmup"
+          php bin/console cache:warmup --env=prod --no-debug 2>&1
+
+          echo ">>> Invalidation du cache applicatif (monitors, workspaces, activité récente)"
+          php bin/console cache:pool:clear cache.app --env=prod 2>/dev/null || true
+
+          echo ">>> Permissions var/"
+          chmod -R 775 var/
+
+          echo "Déploiement terminé !"
+          ENDSSH
+
+          rm -f /tmp/deploy_key
