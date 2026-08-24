@@ -12,13 +12,13 @@ use Zenstruck\ScheduleBundle\Schedule\Task\ProcessTask;
 
 class AppScheduleBuilderTest extends TestCase
 {
-    public function testBuildsTheMessengerConsumeAndImapPollTasksEveryMinuteWithoutOverlapping(): void
+    public function testBuildsTheDispatchChecksMessengerConsumeAndImapPollTasksEveryMinuteWithoutOverlapping(): void
     {
         $schedule = new Schedule();
         (new AppScheduleBuilder('/app/bin/console', 'prod'))->buildSchedule($schedule);
 
         $tasks = $schedule->all();
-        $this->assertCount(2, $tasks);
+        $this->assertCount(3, $tasks);
 
         foreach ($tasks as $task) {
             $this->assertInstanceOf(ProcessTask::class, $task);
@@ -35,13 +35,18 @@ class AppScheduleBuilderTest extends TestCase
         // Quoting style (single vs double quotes) comes from escapeshellarg(),
         // which is platform-dependent (Windows vs Unix) — assert on content,
         // not on an exact quote character.
-        [$messengerTask, $imapTask] = $tasks;
+        [$dispatchChecksTask, $messengerTask, $imapTask] = $tasks;
+
+        $dispatchChecksCommandLine = $dispatchChecksTask->getProcess()->getCommandLine();
+        $this->assertStringContainsString('app:dispatch-checks', $dispatchChecksCommandLine);
+        $this->assertMatchesRegularExpression('/--env=[\'"]prod[\'"]/', $dispatchChecksCommandLine);
+        $this->assertStringContainsString('/app/bin/console', $dispatchChecksCommandLine);
+
         $messengerCommandLine = $messengerTask->getProcess()->getCommandLine();
         $this->assertStringContainsString('messenger:consume', $messengerCommandLine);
-        $this->assertStringContainsString('scheduler_default', $messengerCommandLine);
+        $this->assertStringNotContainsString('scheduler_default', $messengerCommandLine);
         $this->assertStringContainsString('--time-limit=55', $messengerCommandLine);
         $this->assertMatchesRegularExpression('/--env=[\'"]prod[\'"]/', $messengerCommandLine);
-        $this->assertStringContainsString('/app/bin/console', $messengerCommandLine);
 
         $imapCommandLine = $imapTask->getProcess()->getCommandLine();
         $this->assertStringContainsString('app:poll-imap', $imapCommandLine);
