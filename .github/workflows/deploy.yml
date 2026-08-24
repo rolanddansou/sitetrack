@@ -215,9 +215,6 @@ jobs:
           echo ">>> Cache clear"
           php bin/console cache:clear --env=prod --no-debug --no-warmup 2>&1
 
-          echo ">>> Messenger — vérifie/crée la table messenger_messages (idempotent)"
-          php bin/console messenger:setup-transports --env=prod 2>&1
-
           echo ">>> Migrations Doctrine"
           php bin/console doctrine:migrations:migrate \
             --no-interaction --allow-no-migration --env=prod 2>&1
