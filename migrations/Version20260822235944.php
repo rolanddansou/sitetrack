@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DoctrineMigrations;
 
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
@@ -19,6 +20,10 @@ final class Version20260822235944 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        // Front-loaded into Version20260822235943's MySQL branch — see that
+        // migration's docblock for why.
+        $this->skipIf($this->connection->getDatabasePlatform() instanceof AbstractMySQLPlatform, 'Already created by the baseline migration on MySQL.');
+
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql('CREATE TABLE identities (email VARCHAR(255) NOT NULL, email_verified BOOLEAN NOT NULL, email_verified_at DATETIME DEFAULT NULL, is_enabled BOOLEAN NOT NULL, last_login_at DATETIME DEFAULT NULL, created_at DATETIME NOT NULL, updated_at DATETIME DEFAULT NULL, id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_FA392CE8E7927C74 ON identities (email)');
@@ -37,6 +42,8 @@ final class Version20260822235944 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
+        $this->skipIf($this->connection->getDatabasePlatform() instanceof AbstractMySQLPlatform, 'Handled by the baseline migration on MySQL.');
+
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('DROP TABLE identities');
         $this->addSql('DROP TABLE tenant_memberships');

@@ -30,14 +30,17 @@ final class Version20260823155922 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        // Front-loaded into Version20260822235943's MySQL branch — analytics_events
+        // is created there directly with this index already present on MySQL.
+        $this->skipIf($this->connection->getDatabasePlatform() instanceof AbstractMySQLPlatform, 'Index already exists on MySQL (created by the baseline migration).');
+
         $this->addSql('CREATE INDEX idx_analytics_events_site_occurred ON analytics_events (site_id, occurred_at)');
     }
 
     public function down(Schema $schema): void
     {
         $platform = $this->connection->getDatabasePlatform();
-        $this->addSql($platform instanceof AbstractMySQLPlatform
-            ? 'DROP INDEX idx_analytics_events_site_occurred ON analytics_events'
-            : 'DROP INDEX idx_analytics_events_site_occurred');
+        $this->skipIf($platform instanceof AbstractMySQLPlatform, 'Handled by the baseline migration on MySQL.');
+        $this->addSql('DROP INDEX idx_analytics_events_site_occurred');
     }
 }

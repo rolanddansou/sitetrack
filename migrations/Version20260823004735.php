@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DoctrineMigrations;
 
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
@@ -24,6 +25,10 @@ final class Version20260823004735 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        // Front-loaded into Version20260822235943's MySQL branch — analytics_events
+        // is created there directly in its final shape on MySQL.
+        $this->skipIf($this->connection->getDatabasePlatform() instanceof AbstractMySQLPlatform, 'analytics_events already has these columns on MySQL (created by the baseline migration).');
+
         $this->addSql('ALTER TABLE analytics_events ADD COLUMN region VARCHAR(100) DEFAULT NULL');
         $this->addSql('ALTER TABLE analytics_events ADD COLUMN city VARCHAR(100) DEFAULT NULL');
         $this->addSql('ALTER TABLE analytics_events ADD COLUMN utm_source VARCHAR(255) DEFAULT NULL');
@@ -41,6 +46,8 @@ final class Version20260823004735 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
+        $this->skipIf($this->connection->getDatabasePlatform() instanceof AbstractMySQLPlatform, 'Handled by the baseline migration on MySQL.');
+
         $this->addSql('ALTER TABLE analytics_events DROP COLUMN region');
         $this->addSql('ALTER TABLE analytics_events DROP COLUMN city');
         $this->addSql('ALTER TABLE analytics_events DROP COLUMN utm_source');
