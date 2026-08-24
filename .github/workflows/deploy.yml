@@ -52,6 +52,14 @@ jobs:
             --no-progress \
             --no-scripts
 
+      # --no-scripts ci-dessus saute le post-install-cmd (auto-scripts de
+      # composer.json), donc importmap:install ne tourne jamais tout seul.
+      # assets/vendor/ est gitignored — absent du checkout de ce runner —
+      # donc tout gabarit qui rend {{ importmap('app') }} (base.html.twig,
+      # inclus par toutes les pages testées) échoue en 500 sans cette étape.
+      - name: Installer les vendors Importmap
+        run: php bin/console importmap:install --no-interaction
+
       - name: Audit de sécurité des dépendances
         run: composer audit --no-interaction
 
