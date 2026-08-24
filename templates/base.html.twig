@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="h-full bg-paper text-ink">
+<html class="bg-paper text-ink">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,9 +10,9 @@
 
         {% block javascripts %}{% block importmap %}{% include 'components/_importmap.html.twig' %}{% endblock %}{% endblock %}
     </head>
-    <body class="h-full flex flex-col font-body antialiased">
+    <body class="font-body antialiased">
         {% import 'components/_macros.html.twig' as m %}
-        <header class="bg-white border-b border-line shrink-0">
+        <header class="bg-white border-b border-line">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex">
@@ -68,7 +68,7 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto">
+        <main>
             <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
                 {# Display Flash Messages #}
                 {% for label, messages in app.flashes %}
@@ -83,7 +83,7 @@
             </div>
         </main>
 
-        <footer class="bg-paper-dim border-t border-line py-4 shrink-0">
+        <footer class="bg-paper-dim border-t border-line py-4">
             <div class="max-w-7xl mx-auto px-4 text-center font-mono text-[11px] text-ink-muted">
                 &copy; 2026 SiteTrack. Minimalist Operations Suite for Solopreneurs.
             </div>
