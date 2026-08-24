@@ -169,7 +169,7 @@ export default class extends Controller {
 
     buildLandDots() {
         const dots = [];
-        const STEP = 4;
+        const STEP = 3;
         for (let lat = -80; lat <= 80; lat += STEP) {
             const lonStep = STEP / Math.max(0.3, Math.cos(lat * D2R));
             for (let lon = -180; lon < 180; lon += lonStep) {
@@ -251,28 +251,46 @@ export default class extends Controller {
 
         ctx.save();
         ctx.filter = 'blur(3px)';
-        ctx.strokeStyle = 'rgba(46, 224, 184, 0.5)';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(94, 245, 212, 0.65)';
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.arc(this.center, this.center, this.radius, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
 
-        ctx.strokeStyle = 'rgba(46, 224, 184, 0.75)';
+        ctx.strokeStyle = 'rgba(94, 245, 212, 0.9)';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.arc(this.center, this.center, this.radius, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.fillStyle = '#4CE0C4';
+        // Thin bright highlight on the lit edge, matching the gradient's
+        // light source — reinforces the sphere's depth rather than reading
+        // as a flat ring.
+        ctx.strokeStyle = 'rgba(180, 255, 235, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(this.center, this.center, this.radius - 1, Math.PI * 1.05, Math.PI * 1.45);
+        ctx.stroke();
+
+        ctx.fillStyle = '#5EF5D4';
         for (const dot of this.dots) {
             const p = this.project(dot, sinLon, cosLon, sinLat, cosLat);
             if (p.z <= 0.02) continue;
-            ctx.globalAlpha = 0.35 + 0.65 * p.z;
-            const r = 0.9 + p.z;
+            // Higher floor on both alpha and size than before: at the previous
+            // 0.35 alpha / <2px size, land dots blended into the sphere's dark
+            // gradient badly enough to read as "nothing rendered" rather than
+            // "a world map".
+            ctx.globalAlpha = 0.55 + 0.45 * p.z;
+            const r = 1.6 + p.z * 1.2;
             ctx.fillRect(p.sx - r / 2, p.sy - r / 2, r, r);
         }
         ctx.globalAlpha = 1;
+
+        // A slow radar-style pulse ring per pin — the single most "alive"
+        // touch on the page, so it's worth the animation budget. Frozen (no
+        // ring, static glow+core only) under prefers-reduced-motion.
+        const pulse = this.reduced ? 0 : (Date.now() % 1600) / 1600;
 
         const maxCount = this.pins.reduce((max, pin) => Math.max(max, pin.count), 1);
         for (const pin of this.pins) {
@@ -283,21 +301,31 @@ export default class extends Controller {
             const color = lerpColor('#2EE0B8', '#F0894D', t);
             const r = 2.5 + Math.min(pin.count, 8);
 
+            if (!this.reduced) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.globalAlpha = (1 - pulse) * 0.55 * (0.4 + 0.6 * p.z);
+                ctx.beginPath();
+                ctx.arc(p.sx, p.sy, r * (1.4 + pulse * 2.6), 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
             ctx.save();
             ctx.filter = 'blur(4px)';
             ctx.fillStyle = color;
-            ctx.globalAlpha = 0.35 + 0.35 * p.z;
+            ctx.globalAlpha = 0.45 + 0.35 * p.z;
             ctx.beginPath();
             ctx.arc(p.sx, p.sy, r * 1.8, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
 
             ctx.fillStyle = color;
-            ctx.globalAlpha = 0.7 + 0.3 * p.z;
+            ctx.globalAlpha = 0.85 + 0.15 * p.z;
             ctx.beginPath();
             ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
             ctx.fill();
         }
+        ctx.globalAlpha = 1;
         ctx.globalAlpha = 1;
     }
 
