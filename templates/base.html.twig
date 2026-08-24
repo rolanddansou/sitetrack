@@ -12,7 +12,7 @@
     </head>
     <body class="font-body antialiased">
         {% import 'components/_macros.html.twig' as m %}
-        <header class="bg-white border-b border-line">
+        <header class="bg-white border-b border-line sticky top-0 z-20" data-controller="mobile-nav">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex">
@@ -20,7 +20,7 @@
                             {{ m.brand_mark() }}
                         </div>
                         {% if workspace is defined and workspace %}
-                            <nav class="ml-6 flex space-x-8">
+                            <nav class="hidden sm:ml-6 sm:flex sm:space-x-8">
                                 <a href="{{ path('workspace_dashboard_index', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') == 'workspace_dashboard_index' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
                                     Dashboard
                                 </a>
@@ -33,8 +33,9 @@
                             </nav>
                         {% endif %}
                     </div>
+
                     {% if app.user %}
-                        <div class="flex items-center gap-4">
+                        <div class="hidden sm:flex sm:items-center sm:gap-4">
                             {% if workspace is defined and workspace %}
                                 <div class="relative" data-controller="dropdown">
                                     <button type="button" data-action="click->dropdown#toggle" data-dropdown-target="button"
@@ -64,11 +65,60 @@
                             <a href="{{ path('app_logout') }}" class="text-sm font-medium text-ink-muted hover:text-ink">Log out</a>
                         </div>
                     {% endif %}
+
+                    <div class="flex items-center sm:hidden">
+                        <button type="button" data-action="click->mobile-nav#toggle" data-mobile-nav-target="button" aria-expanded="false" aria-controls="mobile-nav-panel"
+                                class="inline-flex items-center justify-center p-2 text-ink-muted hover:text-ink border border-line">
+                            <span class="sr-only">Ouvrir le menu</span>
+                            <span data-mobile-nav-target="iconOpen">{{ ux_icon('heroicons:bars-3', {class: 'w-6 h-6'}) }}</span>
+                            <span data-mobile-nav-target="iconClose" class="hidden">{{ ux_icon('heroicons:x-mark', {class: 'w-6 h-6'}) }}</span>
+                        </button>
+                    </div>
                 </div>
+            </div>
+
+            <div id="mobile-nav-panel" data-mobile-nav-target="panel" class="hidden sm:hidden border-t border-line">
+                {% if workspace is defined and workspace %}
+                    <nav class="px-4 pt-2 pb-3 space-y-1">
+                        <a href="{{ path('workspace_dashboard_index', {workspacePublicId: workspace.publicId}) }}" class="block px-3 py-2 text-base font-medium border-l-4 {{ app.request.attributes.get('_route') == 'workspace_dashboard_index' ? 'border-signal text-ink bg-paper-dim' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
+                            Dashboard
+                        </a>
+                        <a href="{{ path('workspace_availability_index', {workspacePublicId: workspace.publicId}) }}" class="block px-3 py-2 text-base font-medium border-l-4 {{ app.request.attributes.get('_route') starts with 'workspace_availability' or app.request.attributes.get('_route') starts with 'workspace_monitor' or app.request.attributes.get('_route') == 'workspace_rule_new' ? 'border-signal text-ink bg-paper-dim' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
+                            Disponibilité
+                        </a>
+                        <a href="{{ path('workspace_analytics_index', {workspacePublicId: workspace.publicId}) }}" class="block px-3 py-2 text-base font-medium border-l-4 {{ app.request.attributes.get('_route') starts with 'workspace_analytics' ? 'border-signal text-ink bg-paper-dim' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
+                            Analytics
+                        </a>
+                    </nav>
+                {% endif %}
+                {% if app.user %}
+                    <div class="border-t border-line px-4 py-3 space-y-3">
+                        {% if workspace is defined and workspace %}
+                            <div>
+                                <p class="font-mono text-xs font-medium text-ink-muted uppercase tracking-wide mb-1">Workspace</p>
+                                <ul class="space-y-1">
+                                    {% for ws in workspaces|default([]) %}
+                                        <li>
+                                            <a href="{{ path('workspace_dashboard_index', {workspacePublicId: ws.publicId}) }}"
+                                               class="block text-sm {{ ws.publicId == workspace.publicId ? 'text-signal-dark font-semibold' : 'text-ink-muted hover:text-ink' }}">
+                                                {{ ws.name }}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                                <a href="{{ path('workspace_new') }}" class="block mt-2 text-sm text-signal hover:text-signal-dark">+ Create workspace</a>
+                            </div>
+                        {% endif %}
+                        <div class="flex items-center justify-between border-t border-line pt-3">
+                            <span class="font-mono text-xs text-ink-muted">{{ app.user.userIdentifier }}</span>
+                            <a href="{{ path('app_logout') }}" class="text-sm font-medium text-ink-muted hover:text-ink">Log out</a>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </header>
 
-        <main>
+        <main style="min-height: calc(100vh - 4rem);">
             <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
                 {# Display Flash Messages #}
                 {% for label, messages in app.flashes %}
