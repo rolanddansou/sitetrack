@@ -53,4 +53,28 @@ class DoctrineCheckResultRepository implements CheckResultRepositoryInterface
         }
         return $count;
     }
+
+    public function countByStatusInRange(int $monitorId, \DateTimeImmutable $start, \DateTimeImmutable $end): array
+    {
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select('r.status as status', 'COUNT(r.id) as cnt')
+            ->from(CheckResult::class, 'r')
+            ->where('r.monitorId = :monitorId')
+            ->andWhere('r.checkedAt BETWEEN :start AND :end')
+            ->setParameter('monitorId', $monitorId)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->groupBy('r.status')
+            ->getQuery()
+            ->getResult();
+
+        $counts = ['up' => 0, 'down' => 0, 'timeout' => 0];
+        foreach ($rows as $row) {
+            if (array_key_exists($row['status'], $counts)) {
+                $counts[$row['status']] = (int) $row['cnt'];
+            }
+        }
+
+        return $counts;
+    }
 }

@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Cross-tab - SiteTrack{% endblock %}
+
+{% block body %}
+<div class="px-4 sm:px-0 mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div>
+        <a href="{{ path('workspace_analytics_index', {workspacePublicId: workspace.publicId}) }}" class="text-xs text-signal hover:text-signal-dark flex items-center gap-1 mb-2">
+            &larr; Back to Analytics
+        </a>
+        <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Cross-tab</h1>
+        <p class="mt-1 text-sm font-body text-ink-muted">Cross two dimensions to see how they relate &mdash; e.g. which pages are visited from which country.</p>
+    </div>
+
+    <form method="GET" action="{{ path('workspace_analytics_crosstab', {workspacePublicId: workspace.publicId}) }}" data-controller="auto-submit" class="flex items-center gap-3">
+        <select name="dimensionA" data-action="change->auto-submit#submit" class="rounded-sm border-line text-sm py-2 pl-3 pr-8 focus:border-signal focus:ring-signal">
+            {% for dim in dimensions %}
+                <option value="{{ dim }}" {{ dim == dimensionA ? 'selected' : '' }}>{{ dim|capitalize }}</option>
+            {% endfor %}
+        </select>
+        <span class="text-ink-muted text-sm">&times;</span>
+        <select name="dimensionB" data-action="change->auto-submit#submit" class="rounded-sm border-line text-sm py-2 pl-3 pr-8 focus:border-signal focus:ring-signal">
+            {% for dim in dimensions %}
+                <option value="{{ dim }}" {{ dim == dimensionB ? 'selected' : '' }}>{{ dim|capitalize }}</option>
+            {% endfor %}
+        </select>
+        <select name="period" data-action="change->auto-submit#submit" class="rounded-sm border-line text-sm py-2 pl-3 pr-8 focus:border-signal focus:ring-signal">
+            <option value="today" {{ period == 'today' ? 'selected' : '' }}>Today</option>
+            <option value="24h" {{ period == '24h' ? 'selected' : '' }}>Last 24 hours</option>
+            <option value="7d" {{ period == '7d' ? 'selected' : '' }}>Last 7 days</option>
+            <option value="30d" {{ period == '30d' ? 'selected' : '' }}>Last 30 days</option>
+        </select>
+    </form>
+</div>
+
+<div class="px-4 sm:px-0">
+    {% if pivot.total == 0 %}
+        <p class="text-sm text-ink-muted text-center py-12 bg-white border border-line">No data for this period.</p>
+    {% else %}
+        <div class="bg-white border border-line overflow-x-auto">
+            <table class="min-w-full divide-y divide-line text-xs">
+                <thead>
+                    <tr class="bg-paper-dim text-ink-muted text-left uppercase">
+                        <th class="px-4 py-3 font-semibold">{{ dimensionA|capitalize }} \ {{ dimensionB|capitalize }}</th>
+                        {% for colLabel in pivot.colLabels %}
+                            <th class="px-4 py-3 font-semibold">{{ colLabel }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-line bg-white">
+                    {% for rowLabel in pivot.rowLabels %}
+                        <tr>
+                            <td class="px-4 py-3 font-mono text-ink-muted">{{ rowLabel }}</td>
+                            {% for colLabel in pivot.colLabels %}
+                                {% set count = pivot.matrix[rowLabel][colLabel] %}
+                                <td class="px-4 py-3 font-mono {{ count > 0 ? 'text-ink' : 'text-ink-muted/40' }}">{{ count }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="mt-3 text-xs text-ink-muted">Showing the top {{ pivot.rowLabels|length }} &times; {{ pivot.colLabels|length }} values by volume.</p>
+    {% endif %}
+</div>
+{% endblock %}

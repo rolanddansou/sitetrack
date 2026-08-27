@@ -21,6 +21,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class AnalyticsController extends AbstractController
 {
     private const PERIODS = ['today', '24h', '7d', '30d'];
+    private const CROSSTAB_AXIS_LIMIT = 8;
 
     /**
      * Granularities allowed per period, first entry is the default. 30d has
@@ -94,6 +95,91 @@ class AnalyticsController extends AbstractController
         return new JsonResponse(['count' => $this->analyticsQuery->countOnlineNow($workspace->getSiteId())]);
     }
 
+    /**
+     * Generic two-dimension cross-tab (e.g. "pages visited by country"),
+     * independent of any monitor/incident — unlike ReportController, which
+     * only ever crosses traffic against downtime.
+     */
+    #[Route('/workspace/{workspacePublicId}/analytics/crosstab', name: 'workspace_analytics_crosstab', methods: ['GET'])]
+    public function crosstab(Workspace $workspace, Request $request): Response
+    {
+        $siteId = $workspace->getSiteId();
+        $period = $this->resolvePeriod((string) $request->query->get('period', ''));
+        [$start, $end] = $this->resolveRange($period);
+
+        $dimensions = $this->analyticsQuery->groupableColumns();
+        $dimensionA = $this->resolveDimension((string) $request->query->get('dimensionA', ''), $dimensions, 'path');
+        $dimensionB = $this->resolveDimension((string) $request->query->get('dimensionB', ''), $dimensions, 'country');
+
+        $rows = $this->analyticsQuery->crossTab($siteId, $start, $end, $dimensionA, $dimensionB);
+        $pivot = $this->buildCrossTabPivot($rows);
+
+        return $this->render('dashboard/analytics_crosstab.html.twig', [
+            'workspace' => $workspace,
+            'workspaces' => $this->workspaceRepository->findByTenant($workspace->getTenantId()),
+            'period' => $period,
+            'dimensions' => $dimensions,
+            'dimensionA' => $dimensionA,
+            'dimensionB' => $dimensionB,
+            'pivot' => $pivot,
+        ]);
+    }
+
+    /**
+     * @param string[] $allowed
+     */
+    private function resolveDimension(string $dimension, array $allowed, string $default): string
+    {
+        return in_array($dimension, $allowed, true) ? $dimension : $default;
+    }
+
+    /**
+     * Builds a matrix from the top N row-values × top N column-values found
+     * in the (larger) raw combo list — row/column totals come from the same
+     * result set rather than a separate query, so a value that's "top 8" by
+     * cross-tab volume but not top 8 overall can't silently appear as a row
+     * while missing as a column (or vice versa).
+     *
+     * @param array<int, array{labelA: ?string, labelB: ?string, count: int}> $rows
+     * @return array{rowLabels: array<int, string>, colLabels: array<int, string>, matrix: array<string, array<string, int>>, total: int}
+     */
+    private function buildCrossTabPivot(array $rows): array
+    {
+        $rowTotals = [];
+        $colTotals = [];
+        foreach ($rows as $row) {
+            $a = $row['labelA'] ?? '(none)';
+            $b = $row['labelB'] ?? '(none)';
+            $rowTotals[$a] = ($rowTotals[$a] ?? 0) + $row['count'];
+            $colTotals[$b] = ($colTotals[$b] ?? 0) + $row['count'];
+        }
+
+        arsort($rowTotals);
+        arsort($colTotals);
+
+        $rowLabels = array_slice(array_keys($rowTotals), 0, self::CROSSTAB_AXIS_LIMIT);
+        $colLabels = array_slice(array_keys($colTotals), 0, self::CROSSTAB_AXIS_LIMIT);
+
+        $matrix = [];
+        foreach ($rowLabels as $rowLabel) {
+            foreach ($colLabels as $colLabel) {
+                $matrix[$rowLabel][$colLabel] = 0;
+            }
+        }
+
+        $total = 0;
+        foreach ($rows as $row) {
+            $a = $row['labelA'] ?? '(none)';
+            $b = $row['labelB'] ?? '(none)';
+            $total += $row['count'];
+            if (isset($matrix[$a][$b])) {
+                $matrix[$a][$b] = $row['count'];
+            }
+        }
+
+        return ['rowLabels' => $rowLabels, 'colLabels' => $colLabels, 'matrix' => $matrix, 'total' => $total];
+    }
+
     private function resolvePeriod(string $period): string
     {
         return in_array($period, self::PERIODS, true) ? $period : '7d';
@@ -155,32 +241,7 @@ class AnalyticsController extends AbstractController
         ];
     }
 
-    /**
-     * SQLite/MySQL/Postgres each spell "truncate a datetime to hour/day" differently,
-     * and there's no portable Doctrine QueryBuilder helper for it outside the ORM/DQL layer.
-     */
-    private function dateBucketExpr(string $column, string $granularity): string
-    {
-        $platform = $this->connection->getDatabasePlatform();
-
-        if ($platform instanceof AbstractMySQLPlatform) {
-            return $granularity === 'hourly'
-                ? sprintf("DATE_FORMAT(%s, '%%Y-%%m-%%d %%H:00:00')", $column)
-                : sprintf("DATE_FORMAT(%s, '%%Y-%%m-%%d')", $column);
-        }
-
-        if ($platform instanceof PostgreSQLPlatform) {
-            return $granularity === 'hourly'
-                ? sprintf("to_char(%s, 'YYYY-MM-DD HH24:00:00')", $column)
-                : sprintf("to_char(%s, 'YYYY-MM-DD')", $column);
-        }
-
-        return $granularity === 'hourly'
-            ? sprintf("strftime('%%Y-%%m-%%d %%H:00:00', %s)", $column)
-            : sprintf("strftime('%%Y-%%m-%%d', %s)", $column);
-    }
-
-    /** Same portability problem as {@see dateBucketExpr()}, for "seconds between two datetimes". */
+    /** Same portability problem as {@see AnalyticsQueryService::dateBucketExpr()}, for "seconds between two datetimes". */
     private function secondsBetweenExpr(string $minColumn, string $maxColumn): string
     {
         $platform = $this->connection->getDatabasePlatform();
@@ -230,7 +291,7 @@ class AnalyticsController extends AbstractController
     private function buildTimeSeries(string $siteId, \DateTimeImmutable $start, \DateTimeImmutable $end, string $granularity): array
     {
         $rows = $this->analyticsQuery->baseQuery($siteId, $start, $end)
-            ->select(sprintf('%s as bucket, COUNT(*) as count', $this->dateBucketExpr('occurred_at', $granularity)))
+            ->select(sprintf('%s as bucket, COUNT(*) as count', $this->analyticsQuery->dateBucketExpr('occurred_at', $granularity)))
             ->groupBy('bucket')
             ->orderBy('bucket', 'ASC')
             ->executeQuery()

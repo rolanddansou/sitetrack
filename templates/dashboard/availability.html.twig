@@ -8,9 +8,14 @@
         <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Uptime & SMTP Monitors</h1>
         <p class="mt-1 text-sm font-body text-ink-muted">Real-time health status of your apps and transactional mail servers.</p>
     </div>
-    <a href="{{ path('workspace_monitor_new', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark focus:outline-none">
-        Add Monitor
-    </a>
+    <div class="flex items-center gap-2">
+        <a href="{{ path('workspace_report', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-4 py-2 border border-line text-sm font-body font-semibold rounded-sm text-ink bg-white hover:bg-paper-dim focus:outline-none">
+            Workspace Report
+        </a>
+        <a href="{{ path('workspace_monitor_new', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark focus:outline-none">
+            Add Monitor
+        </a>
+    </div>
 </div>
 
 {% if monitors is empty %}

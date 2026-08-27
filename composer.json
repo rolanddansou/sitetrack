@@ -10,6 +10,7 @@
         "doctrine/doctrine-bundle": "^2.19",
         "doctrine/doctrine-migrations-bundle": "^3.7",
         "doctrine/orm": "^3.6",
+        "dompdf/dompdf": "^3.1",
         "geoip2/geoip2": "^3.4",
         "symfony/asset": "7.4.*",
         "symfony/asset-mapper": "7.4.*",

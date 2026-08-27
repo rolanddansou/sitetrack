@@ -30,6 +30,9 @@
                                 <a href="{{ path('workspace_analytics_index', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'workspace_analytics' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
                                     Analytics
                                 </a>
+                                <a href="{{ path('workspace_report', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'workspace_report' or app.request.attributes.get('_route') starts with 'workspace_monitor_report' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
+                                    BI
+                                </a>
                             </nav>
                         {% endif %}
                     </div>
@@ -88,6 +91,9 @@
                         </a>
                         <a href="{{ path('workspace_analytics_index', {workspacePublicId: workspace.publicId}) }}" class="block px-3 py-2 text-base font-medium border-l-4 {{ app.request.attributes.get('_route') starts with 'workspace_analytics' ? 'border-signal text-ink bg-paper-dim' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
                             Analytics
+                        </a>
+                        <a href="{{ path('workspace_report', {workspacePublicId: workspace.publicId}) }}" class="block px-3 py-2 text-base font-medium border-l-4 {{ app.request.attributes.get('_route') starts with 'workspace_report' or app.request.attributes.get('_route') starts with 'workspace_monitor_report' ? 'border-signal text-ink bg-paper-dim' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
+                            BI
                         </a>
                     </nav>
                 {% endif %}

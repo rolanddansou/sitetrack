@@ -16,4 +16,9 @@ interface CheckResultRepositoryInterface
     public function findRecentResults(int $monitorId, int $limit = 10): array;
 
     public function findConsecutiveFailures(int $monitorId): int;
+
+    /**
+     * @return array{up: int, down: int, timeout: int}
+     */
+    public function countByStatusInRange(int $monitorId, \DateTimeImmutable $start, \DateTimeImmutable $end): array;
 }

@@ -54,6 +54,9 @@ services:
     App\Domain\Service\UserAgentParserInterface:
         alias: App\Infrastructure\Http\UaParserUserAgentParser
 
+    App\Domain\Service\PdfRendererInterface:
+        alias: App\Infrastructure\Reporting\DompdfRenderer
+
 
     # Mailer pour les alertes d'erreurs (séparé du mailer principal)
     error_mailer:

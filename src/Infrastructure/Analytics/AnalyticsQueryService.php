@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Infrastructure\Analytics;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
@@ -22,6 +24,66 @@ class AnalyticsQueryService
     private const GROUPABLE_COLUMNS = ['referrer', 'utm_campaign', 'path', 'country', 'region', 'city', 'browser', 'os', 'device'];
 
     public function __construct(private Connection $connection) {}
+
+    /**
+     * @return string[]
+     */
+    public function groupableColumns(): array
+    {
+        return self::GROUPABLE_COLUMNS;
+    }
+
+    /**
+     * SQLite/MySQL/Postgres each spell "truncate a datetime to hour/day"
+     * differently, and there's no portable Doctrine QueryBuilder helper for
+     * it outside the ORM/DQL layer. Public (moved from AnalyticsController)
+     * so any raw-DBAL bucketed query — analytics or otherwise — can reuse it
+     * instead of re-deriving the same platform branching.
+     */
+    public function dateBucketExpr(string $column, string $granularity): string
+    {
+        $platform = $this->connection->getDatabasePlatform();
+
+        if ($platform instanceof AbstractMySQLPlatform) {
+            return $granularity === 'hourly'
+                ? sprintf("DATE_FORMAT(%s, '%%Y-%%m-%%d %%H:00:00')", $column)
+                : sprintf("DATE_FORMAT(%s, '%%Y-%%m-%%d')", $column);
+        }
+
+        if ($platform instanceof PostgreSQLPlatform) {
+            return $granularity === 'hourly'
+                ? sprintf("to_char(%s, 'YYYY-MM-DD HH24:00:00')", $column)
+                : sprintf("to_char(%s, 'YYYY-MM-DD')", $column);
+        }
+
+        return $granularity === 'hourly'
+            ? sprintf("strftime('%%Y-%%m-%%d %%H:00:00', %s)", $column)
+            : sprintf("strftime('%%Y-%%m-%%d', %s)", $column);
+    }
+
+    /**
+     * Daily pageview counts, keyed by day (Y-m-d) — the pageview half of the
+     * latency×traffic correlation (see LatencyTrafficService), and a
+     * candidate for buildTimeSeries()-style charting wherever daily
+     * granularity is all that's needed.
+     *
+     * @return array<string, int>
+     */
+    public function pageviewsByDay(string $siteId, \DateTimeImmutable $start, \DateTimeImmutable $end): array
+    {
+        $rows = $this->baseQuery($siteId, $start, $end)
+            ->select(sprintf('%s as bucket, COUNT(*) as count', $this->dateBucketExpr('occurred_at', 'daily')))
+            ->groupBy('bucket')
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[$row['bucket']] = (int) $row['count'];
+        }
+
+        return $result;
+    }
 
     public function baseQuery(string $siteId, \DateTimeImmutable $start, \DateTimeImmutable $end): QueryBuilder
     {
@@ -182,6 +244,38 @@ class AnalyticsQueryService
             'path' => $row['path'],
             'occurredAt' => new \DateTimeImmutable($row['occurred_at']),
         ], $rows);
+    }
+
+    /**
+     * Two-dimensional breakdown (e.g. "pages visited by country") — unlike
+     * {@see groupBy()}, which groups on a single column. Returns raw combo
+     * rows sorted by count, capped generously; callers pick the top rows/
+     * columns to actually render as a matrix (this method doesn't shape a
+     * pivot table itself, matching the "shared query, presentation stays in
+     * the controller" split already used elsewhere in this class).
+     *
+     * @return array<int, array{labelA: ?string, labelB: ?string, count: int}>
+     */
+    public function crossTab(string $siteId, \DateTimeImmutable $start, \DateTimeImmutable $end, string $columnA, string $columnB): array
+    {
+        if (!in_array($columnA, self::GROUPABLE_COLUMNS, true) || !in_array($columnB, self::GROUPABLE_COLUMNS, true)) {
+            throw new \InvalidArgumentException('Column not groupable.');
+        }
+
+        $rows = $this->baseQuery($siteId, $start, $end)
+            ->select(sprintf('%s as labelA, %s as labelB, COUNT(*) as count', $columnA, $columnB))
+            ->groupBy($columnA)
+            ->addGroupBy($columnB)
+            ->orderBy('count', 'DESC')
+            ->setMaxResults(500)
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        foreach ($rows as &$row) {
+            $row['count'] = (int) $row['count'];
+        }
+
+        return $rows;
     }
 
     /**

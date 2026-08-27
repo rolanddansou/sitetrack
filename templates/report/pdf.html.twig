@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Incident Report - {{ monitor.name }}</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #111827; }
+        h1 { font-size: 18px; margin-bottom: 4px; }
+        p.subtitle { color: #6b7280; margin-top: 0; margin-bottom: 20px; }
+        table.stats { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+        table.stats td { border: 1px solid #d1d5db; padding: 10px; text-align: center; width: 25%; }
+        table.stats td .value { font-size: 16px; font-weight: bold; display: block; }
+        table.stats td .label { font-size: 9px; text-transform: uppercase; color: #6b7280; }
+        table.incidents { width: 100%; border-collapse: collapse; }
+        table.incidents th, table.incidents td { border: 1px solid #d1d5db; padding: 6px 8px; text-align: left; font-size: 10px; }
+        table.incidents th { background: #f3f4f6; text-transform: uppercase; }
+        .lost { color: #b91c1c; font-weight: bold; }
+        .empty { color: #6b7280; text-align: center; padding: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Incident Impact Report &mdash; {{ monitor.name }}</h1>
+    <p class="subtitle">{{ report.rangeStart|date('Y-m-d') }} to {{ report.rangeEnd|date('Y-m-d') }} ({{ period }})</p>
+
+    <table class="stats">
+        <tr>
+            <td><span class="value">{{ report.uptimePercent }}%</span><span class="label">Uptime</span></td>
+            <td><span class="value">{{ report.mttrMinutes is not null ? report.mttrMinutes ~ ' min' : '--' }}</span><span class="label">MTTR</span></td>
+            <td><span class="value">{{ report.incidentCount }}</span><span class="label">Incidents</span></td>
+            <td><span class="value">{{ report.totalEstimatedLostPageviews }}</span><span class="label">Est. Lost Pageviews</span></td>
+        </tr>
+    </table>
+
+    {% if report.incidents is empty %}
+        <p class="empty">No incidents in this period.</p>
+    {% else %}
+        <table class="incidents">
+            <thead>
+                <tr>
+                    <th>Triggered At</th>
+                    <th>Duration</th>
+                    <th>Condition</th>
+                    <th>Pageviews During</th>
+                    <th>Expected Baseline</th>
+                    <th>Est. Lost</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inc in report.incidents %}
+                    <tr>
+                        <td>{{ inc.triggeredAt|date('Y-m-d H:i:s') }}</td>
+                        <td>{{ inc.durationMinutes is not null ? inc.durationMinutes ~ ' min' : 'Ongoing' }}</td>
+                        <td>{{ inc.conditionType }}</td>
+                        <td>{{ inc.pageviewsDuringIncident }}</td>
+                        <td>{{ inc.expectedPageviewsBaseline }}</td>
+                        <td class="{{ inc.estimatedLostPageviews > 0 ? 'lost' : '' }}">{{ inc.estimatedLostPageviews }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</body>
+</html>

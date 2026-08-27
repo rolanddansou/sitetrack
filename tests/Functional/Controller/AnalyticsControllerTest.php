@@ -151,6 +151,38 @@ class AnalyticsControllerTest extends WebTestCase
         $this->assertSame('50%', trim($crawler->filter('[data-kpi="bounce-rate"] p.text-2xl')->text()));
     }
 
+    public function testCrossTabBuildsPivotOfTwoDimensions(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser($client));
+
+        $this->insertEvent(['session_id' => 'session-a', 'path' => '/pricing', 'country' => 'FR']);
+        $this->insertEvent(['session_id' => 'session-b', 'path' => '/pricing', 'country' => 'FR']);
+        $this->insertEvent(['session_id' => 'session-c', 'path' => '/docs', 'country' => 'US']);
+
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/analytics/crosstab?dimensionA=path&dimensionB=country');
+
+        $this->assertResponseIsSuccessful();
+        $text = $crawler->filter('table')->text();
+        $this->assertStringContainsString('/pricing', $text);
+        $this->assertStringContainsString('/docs', $text);
+        $this->assertStringContainsString('FR', $text);
+        $this->assertStringContainsString('US', $text);
+    }
+
+    public function testCrossTabRejectsInvalidDimensionAndFallsBackToDefault(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser($client));
+
+        $this->insertEvent(['session_id' => 'session-a']);
+
+        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/analytics/crosstab?dimensionA=session_id&dimensionB=country');
+
+        // session_id is not in GROUPABLE_COLUMNS — must fall back silently, not 500.
+        $this->assertResponseIsSuccessful();
+    }
+
     public function testOnlineNowEndpointReturnsRecentSessionCountOnly(): void
     {
         $client = static::createClient();
