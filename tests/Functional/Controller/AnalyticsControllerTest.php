@@ -179,8 +179,8 @@ class AnalyticsControllerTest extends WebTestCase
         $text = $crawler->filter('table')->text();
         $this->assertStringContainsString('/pricing', $text);
         $this->assertStringContainsString('/docs', $text);
-        $this->assertStringContainsString('FR', $text);
-        $this->assertStringContainsString('US', $text);
+        $this->assertStringContainsString('France', $text);
+        $this->assertStringContainsString('États-Unis', $text);
     }
 
     public function testCrossTabRejectsInvalidDimensionAndFallsBackToDefault(): void

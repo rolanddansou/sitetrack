@@ -4,7 +4,7 @@
 
 {% block body %}
 {% set dimensionLabels = {
-    referrer: 'Référent', utm_campaign: 'Campagne', path: 'Page', country: 'Pays',
+    referrer: 'Source', utm_campaign: 'Campagne', path: 'Page', country: 'Pays',
     region: 'Région', city: 'Ville', browser: 'Navigateur', os: 'OS', device: 'Appareil'
 } %}
 <div class="px-4 sm:px-0 mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -47,14 +47,14 @@
                     <tr class="bg-paper-dim text-ink-muted text-left uppercase">
                         <th class="px-4 py-3 font-semibold">{{ dimensionLabels[dimensionA] ?? dimensionA|capitalize }} \ {{ dimensionLabels[dimensionB] ?? dimensionB|capitalize }}</th>
                         {% for colLabel in pivot.colLabels %}
-                            <th class="px-4 py-3 font-semibold">{{ colLabel }}</th>
+                            <th class="px-4 py-3 font-semibold">{{ colDisplayLabels[colLabel] ?? colLabel }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-line bg-white">
                     {% for rowLabel in pivot.rowLabels %}
                         <tr>
-                            <td class="px-4 py-3 font-mono text-ink-muted">{{ rowLabel }}</td>
+                            <td class="px-4 py-3 font-mono text-ink-muted">{{ rowDisplayLabels[rowLabel] ?? rowLabel }}</td>
                             {% for colLabel in pivot.colLabels %}
                                 {% set count = pivot.matrix[rowLabel][colLabel] %}
                                 <td class="px-4 py-3 font-mono {{ count > 0 ? 'text-ink' : 'text-ink-muted/40' }}">{{ count }}</td>

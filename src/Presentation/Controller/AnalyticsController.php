@@ -9,6 +9,7 @@ use App\Domain\Repository\WorkspaceRepositoryInterface;
 use App\Infrastructure\Analytics\AnalyticsIconResolver;
 use App\Infrastructure\Analytics\AnalyticsQueryService;
 use App\Infrastructure\Analytics\ChannelClassifier;
+use App\Infrastructure\Analytics\CountryNameResolver;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
@@ -41,7 +42,8 @@ class AnalyticsController extends AbstractController
         private Connection $connection,
         private ChannelClassifier $channelClassifier,
         private AnalyticsQueryService $analyticsQuery,
-        private AnalyticsIconResolver $iconResolver
+        private AnalyticsIconResolver $iconResolver,
+        private CountryNameResolver $countryNameResolver
     ) {}
 
     #[Route('/workspace/{workspacePublicId}/analytics', name: 'workspace_analytics_index', methods: ['GET'])]
@@ -124,7 +126,30 @@ class AnalyticsController extends AbstractController
             'dimensionA' => $dimensionA,
             'dimensionB' => $dimensionB,
             'pivot' => $pivot,
+            'rowDisplayLabels' => $this->resolveDisplayLabels($pivot['rowLabels'], $dimensionA),
+            'colDisplayLabels' => $this->resolveDisplayLabels($pivot['colLabels'], $dimensionB),
         ]);
+    }
+
+    /**
+     * Cross-tab axis labels are raw dimension values used as matrix keys
+     * (e.g. "BJ") — resolved only for display, so a country axis reads as
+     * "Bénin" the same way the live globe/breakdown does, without touching
+     * the keys the matrix lookup depends on.
+     *
+     * @param string[] $labels
+     * @return array<string, string>
+     */
+    private function resolveDisplayLabels(array $labels, string $dimension): array
+    {
+        if ($dimension !== 'country') {
+            return array_combine($labels, $labels);
+        }
+
+        return array_combine($labels, array_map(
+            fn (string $label): string => $this->countryNameResolver->resolve($label),
+            $labels
+        ));
     }
 
     /**
