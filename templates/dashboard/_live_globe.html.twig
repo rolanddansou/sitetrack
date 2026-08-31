@@ -28,7 +28,7 @@
                 {% for item in liveGlobe.feed %}
                     <li class="py-2 flex items-center justify-between gap-4" data-globe="feed-item">
                         <span class="text-sm text-ink-muted truncate">
-                            {% if item.country %}<span class="font-mono text-xs text-ink-muted mr-2">{{ item.country }}</span>{% endif %}
+                            {% if item.country %}<span class="text-xs text-ink-muted mr-2">{{ item.countryName ?: item.country }}</span>{% endif %}
                             quelqu'un lit <span class="font-medium text-ink">{{ item.path }}</span>
                         </span>
                         <span class="font-mono text-xs text-ink-muted shrink-0">{{ item.relativeTime }}</span>
@@ -44,7 +44,7 @@
                     <div class="flex flex-wrap gap-2" data-globe="country-breakdown">
                         {% for row in countryBreakdown7d %}
                             <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-paper-dim border border-line text-xs" data-globe="country-breakdown-item">
-                                <span class="font-mono text-ink-muted">{{ row.label ?: '??' }}</span>
+                                <span class="text-ink-muted">{{ row.name ?: row.label }}</span>
                                 <span class="font-mono font-semibold text-ink">{{ row.count }}</span>
                             </span>
                         {% endfor %}

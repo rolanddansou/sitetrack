@@ -10,6 +10,7 @@ use App\Domain\Repository\MonitorRepositoryInterface;
 use App\Domain\Repository\WorkspaceRepositoryInterface;
 use App\Infrastructure\Activity\RecentActivityProvider;
 use App\Infrastructure\Analytics\AnalyticsQueryService;
+use App\Infrastructure\Analytics\CountryNameResolver;
 use App\Infrastructure\Analytics\LiveGlobeProvider;
 use App\Infrastructure\Security\CurrentTenantResolver;
 use Doctrine\DBAL\Connection;
@@ -29,7 +30,8 @@ class DashboardOverviewController extends AbstractController
         private AnalyticsQueryService $analyticsQuery,
         private LiveGlobeProvider $liveGlobeProvider,
         private Connection $connection,
-        private CurrentTenantResolver $currentTenantResolver
+        private CurrentTenantResolver $currentTenantResolver,
+        private CountryNameResolver $countryNameResolver
     ) {}
 
     /**
@@ -57,10 +59,13 @@ class DashboardOverviewController extends AbstractController
         // Unresolved GeoIP groups into its own "country" row (label === null) —
         // drop it here rather than showing a confusing "??" placeholder in a
         // breakdown that's specifically framed as "by country".
-        $countryBreakdown7d = array_values(array_filter(
-            $this->analyticsQuery->groupBy($siteId, new \DateTimeImmutable('-7 days'), new \DateTimeImmutable(), 'country'),
-            static fn (array $row): bool => $row['label'] !== null
-        ));
+        $countryBreakdown7d = array_map(
+            fn (array $row): array => $row + ['name' => $this->countryNameResolver->resolve($row['label'])],
+            array_values(array_filter(
+                $this->analyticsQuery->groupBy($siteId, new \DateTimeImmutable('-7 days'), new \DateTimeImmutable(), 'country'),
+                static fn (array $row): bool => $row['label'] !== null
+            ))
+        );
 
         return $this->render('dashboard/overview.html.twig', [
             'workspace' => $workspace,
@@ -88,7 +93,7 @@ class DashboardOverviewController extends AbstractController
      * repeated /dashboard loads don't each pay for fresh queries; only the
      * relative-time formatting happens here, per request, so it's never stale.
      *
-     * @return array{online: int, onlineCountries: int, pins: array<int, array{country: ?string, count: int}>, feed: array<int, array{country: ?string, path: string, relativeTime: string}>}
+     * @return array{online: int, onlineCountries: int, pins: array<int, array{country: ?string, countryName: ?string, count: int}>, feed: array<int, array{country: ?string, countryName: ?string, path: string, relativeTime: string}>}
      */
     private function buildLiveGlobePayload(string $siteId): array
     {
@@ -97,9 +102,14 @@ class DashboardOverviewController extends AbstractController
         return [
             'online' => $raw['online'],
             'onlineCountries' => $raw['onlineCountries'],
-            'pins' => $raw['pins'],
+            'pins' => array_map(fn (array $pin): array => [
+                'country' => $pin['country'],
+                'countryName' => $this->countryNameResolver->resolve($pin['country']),
+                'count' => $pin['count'],
+            ], $raw['pins']),
             'feed' => array_map(fn (array $item): array => [
                 'country' => $item['country'],
+                'countryName' => $this->countryNameResolver->resolve($item['country']),
                 'path' => $item['path'],
                 'relativeTime' => $this->formatRelativeTime($item['occurredAt']),
             ], $raw['feed']),

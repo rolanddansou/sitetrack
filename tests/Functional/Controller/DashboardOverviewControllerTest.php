@@ -294,7 +294,7 @@ class DashboardOverviewControllerTest extends WebTestCase
 
         $countryItems = $crawler->filter('[data-globe="country-breakdown-item"]');
         $this->assertCount(1, $countryItems, 'only the pageview from the last 7 days should appear in the breakdown');
-        $this->assertStringContainsString('FR', $countryItems->eq(0)->text());
+        $this->assertStringContainsString('France', $countryItems->eq(0)->text());
     }
 
     public function testUnresolvedGeoIpIsExcludedFromCountryBreakdownAndFeedLabel(): void

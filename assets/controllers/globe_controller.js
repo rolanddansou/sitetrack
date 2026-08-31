@@ -269,7 +269,7 @@ export default class extends Controller {
             return;
         }
 
-        const label = pin.country ? pin.country : '??';
+        const label = pin.countryName ?? pin.country ?? '??';
         const suffix = pin.count === 1 ? 'visiteur en ligne' : 'visiteurs en ligne';
         this.tooltip.textContent = `${label} · ${pin.count} ${suffix}`;
         this.tooltip.classList.remove('hidden');
@@ -498,7 +498,7 @@ export default class extends Controller {
             .map((pin) => {
                 const centroid = COUNTRY_CENTROIDS[pin.country];
                 if (!centroid) return null;
-                return { ...this.toVector(centroid[0], centroid[1]), count: pin.count, country: pin.country };
+                return { ...this.toVector(centroid[0], centroid[1]), count: pin.count, country: pin.country, countryName: pin.countryName };
             })
             .filter(Boolean);
 
@@ -538,8 +538,8 @@ export default class extends Controller {
 
             if (item.country) {
                 const country = document.createElement('span');
-                country.className = 'font-mono text-xs text-ink-muted mr-2';
-                country.textContent = item.country;
+                country.className = 'text-xs text-ink-muted mr-2';
+                country.textContent = item.countryName ?? item.country;
                 label.append(country);
             }
             label.append(document.createTextNode('quelqu\'un lit '), path);
