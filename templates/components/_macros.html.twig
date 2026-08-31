@@ -117,10 +117,11 @@
                     <table class="min-w-full divide-y divide-line text-xs">
                         <tbody class="divide-y divide-line bg-white">
                             {% for row in tab.rows %}
+                                {% set icon = row.icon is defined and row.icon ? row.icon : (tab.icon is defined ? tab.icon : null) %}
                                 <tr class="hover:bg-paper-dim">
                                     <td class="px-6 py-3 font-medium text-ink max-w-xs">
-                                        <span class="inline-flex items-center gap-2 min-w-0"{{ row.icon is defined and row.icon ? (' data-icon="' ~ row.icon ~ '"')|raw : '' }}>
-                                            {% if row.icon is defined and row.icon %}{{ ux_icon(row.icon, {class: 'w-4 h-4 shrink-0'}) }}{% endif %}
+                                        <span class="inline-flex items-center gap-2 min-w-0"{{ icon ? (' data-icon="' ~ icon ~ '"')|raw : '' }}>
+                                            {% if icon %}{{ ux_icon(icon, {class: 'w-4 h-4 shrink-0 text-ink-muted'}) }}{% endif %}
                                             <span class="truncate min-w-0">{{ row.label ?: 'Unknown' }}</span>
                                         </span>
                                     </td>
