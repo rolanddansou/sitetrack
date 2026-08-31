@@ -84,7 +84,7 @@ class AnalyticsController extends AbstractController
             'topCampaigns' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'utm_campaign'),
             'topPages' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'path'),
             'entryPages' => $this->buildEntryPages($siteId, $start, $end),
-            'countries' => $this->attachIcons($this->analyticsQuery->groupBy($siteId, $start, $end, 'country'), fn (?string $v) => $this->iconResolver->resolveCountryIcon($v)),
+            'countries' => $this->attachCountryNames($this->attachIcons($this->analyticsQuery->groupBy($siteId, $start, $end, 'country'), fn (?string $v) => $this->iconResolver->resolveCountryIcon($v))),
             'regions' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'region'),
             'cities' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'city'),
             'browsers' => $this->attachIcons($this->analyticsQuery->groupBy($siteId, $start, $end, 'browser'), fn (?string $v) => $this->iconResolver->resolveBrowserIcon($v)),
@@ -215,6 +215,24 @@ class AnalyticsController extends AbstractController
     {
         foreach ($rows as &$row) {
             $row['icon'] = $resolve($row['label']);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Swaps a raw ISO2 country code for its French display name (e.g. "BJ"
+     * -> "Bénin"), same resolver used by the live globe widget and the
+     * crosstab. Runs after attachIcons() so the icon lookup still sees the
+     * original code, not the resolved name.
+     *
+     * @param array<int, array{label: ?string, count: int}> $rows
+     * @return array<int, array{label: ?string, count: int}>
+     */
+    private function attachCountryNames(array $rows): array
+    {
+        foreach ($rows as &$row) {
+            $row['label'] = $row['label'] !== null ? $this->countryNameResolver->resolve($row['label']) : null;
         }
 
         return $rows;
