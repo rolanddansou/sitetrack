@@ -1,7 +1,7 @@
 {% import 'components/_macros.html.twig' as m %}
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
     <div class="bg-white border border-line p-6">
-        <h3 class="font-mono text-xs font-bold text-ink uppercase tracking-wider mb-4">Channels</h3>
+        <h3 class="font-mono text-xs font-bold text-ink uppercase tracking-wider mb-4">Canaux</h3>
         <canvas data-controller="chart"
                 data-chart-type-value="doughnut"
                 data-chart-data-value="{{ channels|json_encode }}"
@@ -9,7 +9,7 @@
     </div>
 
     {{ m.tabbed_list([
-        {label: 'Referrer', rows: topReferrers},
-        {label: 'Campaign', rows: topCampaigns}
+        {label: 'Référent', rows: topReferrers},
+        {label: 'Campagne', rows: topCampaigns}
     ]) }}
 </div>

@@ -88,8 +88,8 @@ class DashboardControllerTest extends WebTestCase
         $client->request('GET', '/workspace/' . $this->workspacePublicId . '/availability');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('h1', 'Uptime & SMTP Monitors');
-        $this->assertSelectorTextContains('h3', 'No monitors configured');
+        $this->assertSelectorTextContains('h1', 'Moniteurs de disponibilité & SMTP');
+        $this->assertSelectorTextContains('h3', 'Aucun moniteur configuré');
     }
 
     public function testAnonymousRequestRedirectsToLogin(): void

@@ -6,6 +6,7 @@ namespace App\Presentation\Controller;
 
 use App\Domain\Entity\Workspace;
 use App\Domain\Repository\WorkspaceRepositoryInterface;
+use App\Infrastructure\Analytics\AnalyticsIconResolver;
 use App\Infrastructure\Analytics\AnalyticsQueryService;
 use App\Infrastructure\Analytics\ChannelClassifier;
 use Doctrine\DBAL\Connection;
@@ -39,7 +40,8 @@ class AnalyticsController extends AbstractController
         private WorkspaceRepositoryInterface $workspaceRepository,
         private Connection $connection,
         private ChannelClassifier $channelClassifier,
-        private AnalyticsQueryService $analyticsQuery
+        private AnalyticsQueryService $analyticsQuery,
+        private AnalyticsIconResolver $iconResolver
     ) {}
 
     #[Route('/workspace/{workspacePublicId}/analytics', name: 'workspace_analytics_index', methods: ['GET'])]
@@ -80,12 +82,12 @@ class AnalyticsController extends AbstractController
             'topCampaigns' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'utm_campaign'),
             'topPages' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'path'),
             'entryPages' => $this->buildEntryPages($siteId, $start, $end),
-            'countries' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'country'),
+            'countries' => $this->attachIcons($this->analyticsQuery->groupBy($siteId, $start, $end, 'country'), fn (?string $v) => $this->iconResolver->resolveCountryIcon($v)),
             'regions' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'region'),
             'cities' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'city'),
-            'browsers' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'browser'),
-            'oses' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'os'),
-            'devices' => $this->analyticsQuery->groupBy($siteId, $start, $end, 'device'),
+            'browsers' => $this->attachIcons($this->analyticsQuery->groupBy($siteId, $start, $end, 'browser'), fn (?string $v) => $this->iconResolver->resolveBrowserIcon($v)),
+            'oses' => $this->attachIcons($this->analyticsQuery->groupBy($siteId, $start, $end, 'os'), fn (?string $v) => $this->iconResolver->resolveOsIcon($v)),
+            'devices' => $this->attachIcons($this->analyticsQuery->groupBy($siteId, $start, $end, 'device'), fn (?string $v) => $this->iconResolver->resolveDeviceIcon((string) $v)),
         ]);
     }
 
@@ -178,6 +180,19 @@ class AnalyticsController extends AbstractController
         }
 
         return ['rowLabels' => $rowLabels, 'colLabels' => $colLabels, 'matrix' => $matrix, 'total' => $total];
+    }
+
+    /**
+     * @param array<int, array{label: string, count: int}> $rows
+     * @return array<int, array{label: string, count: int, icon: ?string}>
+     */
+    private function attachIcons(array $rows, \Closure $resolve): array
+    {
+        foreach ($rows as &$row) {
+            $row['icon'] = $resolve($row['label']);
+        }
+
+        return $rows;
     }
 
     private function resolvePeriod(string $period): string
@@ -347,9 +362,9 @@ class AnalyticsController extends AbstractController
 
         $palette = [
             'Direct' => '#9AA69E',
-            'Organic Search' => '#0E7C6B',
-            'Organic Social' => '#4C8577',
-            'Referral' => '#C15A2B',
+            'Recherche organique' => '#0E7C6B',
+            'Social organique' => '#4C8577',
+            'Référent' => '#C15A2B',
         ];
 
         return [

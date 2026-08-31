@@ -119,7 +119,7 @@ class DashboardController extends AbstractController
                 }
 
                 $this->monitorRepository->save($monitor);
-                $this->addFlash('success', 'Monitor created successfully.');
+                $this->addFlash('success', 'Moniteur créé avec succès.');
                 return $this->redirectToRoute('workspace_availability_index', ['workspacePublicId' => $workspace->getPublicId()]);
             }
         }
@@ -179,7 +179,7 @@ class DashboardController extends AbstractController
         $monitor = $this->monitorRepository->findByPublicId($monitorPublicId);
         if ($monitor !== null && $monitor->getWorkspaceId() === $workspace->getId()) {
             $this->monitorRepository->delete($monitor);
-            $this->addFlash('success', 'Monitor deleted successfully.');
+            $this->addFlash('success', 'Moniteur supprimé avec succès.');
         }
         return $this->redirectToRoute('workspace_availability_index', ['workspacePublicId' => $workspace->getPublicId()]);
     }
@@ -198,7 +198,7 @@ class DashboardController extends AbstractController
 
         $validationErrors = $this->validator->validate($dto);
         if (count($validationErrors) > 0) {
-            $this->addFlash('error', 'Invalid alert rule configuration.');
+            $this->addFlash('error', "Configuration de règle d'alerte invalide.");
         } else {
             $rule = new AlertRule(
                 monitorId: $monitor->getId(),
@@ -209,7 +209,7 @@ class DashboardController extends AbstractController
                 cooldownMinutes: $dto->cooldownMinutes
             );
             $this->alertRuleRepository->save($rule);
-            $this->addFlash('success', 'Alert rule added.');
+            $this->addFlash('success', "Règle d'alerte ajoutée.");
         }
 
         return $this->redirectToRoute('workspace_monitor_show', ['workspacePublicId' => $workspace->getPublicId(), 'monitorPublicId' => $monitorPublicId]);
@@ -277,19 +277,19 @@ class DashboardController extends AbstractController
     private function buildHttpStatus(?CheckResultDto $lastCheck): array
     {
         if ($lastCheck === null) {
-            return ['state' => 'pending', 'label' => 'No pings recorded yet', 'meta' => null, 'errorMessage' => null];
+            return ['state' => 'pending', 'label' => 'Aucun ping enregistré pour le moment', 'meta' => null, 'errorMessage' => null];
         }
 
         if ($lastCheck->isSuccess()) {
             return [
                 'state' => 'up',
-                'label' => 'Online',
-                'meta' => sprintf('(Checked at %s)', $lastCheck->checkedAt->format('H:i:s')),
+                'label' => 'En ligne',
+                'meta' => sprintf('(Vérifié à %s)', $lastCheck->checkedAt->format('H:i:s')),
                 'errorMessage' => null,
             ];
         }
 
-        return ['state' => 'down', 'label' => 'Offline', 'meta' => null, 'errorMessage' => $lastCheck->errorMessage];
+        return ['state' => 'down', 'label' => 'Hors ligne', 'meta' => null, 'errorMessage' => $lastCheck->errorMessage];
     }
 
     /**
@@ -299,7 +299,7 @@ class DashboardController extends AbstractController
     private function buildSmtpStatus(?array $lastSmtp): array
     {
         if ($lastSmtp === null) {
-            return ['state' => 'pending', 'label' => 'No test mail sent yet', 'meta' => null, 'errorMessage' => null];
+            return ['state' => 'pending', 'label' => 'Aucun email de test envoyé pour le moment', 'meta' => null, 'errorMessage' => null];
         }
 
         if ($lastSmtp['status'] === 'delivered') {
@@ -309,17 +309,17 @@ class DashboardController extends AbstractController
 
             return [
                 'state' => 'up',
-                'label' => 'Operational',
-                'meta' => sprintf('(Delivered in %ss at %s)', $lastSmtp['delivery_time_seconds'], $receivedAt),
+                'label' => 'Opérationnel',
+                'meta' => sprintf('(Livré en %ss à %s)', $lastSmtp['delivery_time_seconds'], $receivedAt),
                 'errorMessage' => null,
             ];
         }
 
         if ($lastSmtp['status'] === 'sent') {
-            return ['state' => 'pending', 'label' => 'Awaiting Delivery Receipt...', 'meta' => null, 'errorMessage' => null];
+            return ['state' => 'pending', 'label' => "En attente de l'accusé de livraison...", 'meta' => null, 'errorMessage' => null];
         }
 
-        return ['state' => 'down', 'label' => 'Failed / Timed Out', 'meta' => null, 'errorMessage' => $lastSmtp['error_message'] ?? null];
+        return ['state' => 'down', 'label' => 'Échec / Délai dépassé', 'meta' => null, 'errorMessage' => $lastSmtp['error_message'] ?? null];
     }
 
     /**

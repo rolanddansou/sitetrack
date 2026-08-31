@@ -5,15 +5,15 @@
 {% block body %}
 <div class="px-4 sm:px-0 flex justify-between items-center mb-6">
     <div>
-        <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Uptime & SMTP Monitors</h1>
-        <p class="mt-1 text-sm font-body text-ink-muted">Real-time health status of your apps and transactional mail servers.</p>
+        <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Moniteurs de disponibilité & SMTP</h1>
+        <p class="mt-1 text-sm font-body text-ink-muted">État de santé en temps réel de vos applications et serveurs d'envoi transactionnel.</p>
     </div>
     <div class="flex items-center gap-2">
         <a href="{{ path('workspace_report', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-4 py-2 border border-line text-sm font-body font-semibold rounded-sm text-ink bg-white hover:bg-paper-dim focus:outline-none">
-            Workspace Report
+            Rapport du workspace
         </a>
         <a href="{{ path('workspace_monitor_new', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark focus:outline-none">
-            Add Monitor
+            Ajouter un moniteur
         </a>
     </div>
 </div>
@@ -21,11 +21,11 @@
 {% if monitors is empty %}
 <div class="text-center py-12 bg-white border border-line mx-4 sm:mx-0">
     {{ ux_icon('heroicons:signal', {class: 'w-10 h-10 text-signal mx-auto'}) }}
-    <h3 class="mt-2 text-sm font-body font-semibold text-ink">No monitors configured</h3>
-    <p class="mt-1 text-sm font-body text-ink-muted">Get started by creating your first health-check or SMTP monitor.</p>
+    <h3 class="mt-2 text-sm font-body font-semibold text-ink">Aucun moniteur configuré</h3>
+    <p class="mt-1 text-sm font-body text-ink-muted">Commencez par créer votre premier moniteur de disponibilité ou SMTP.</p>
     <div class="mt-6">
         <a href="{{ path('workspace_monitor_new', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark">
-            Create Monitor
+            Créer un moniteur
         </a>
     </div>
 </div>
@@ -54,10 +54,10 @@
                             {# Response Speed #}
                             <div class="text-right hidden sm:block">
                                 {% if monitor.type == 'http' and check %}
-                                    <span class="text-xs text-ink-muted block">Latency</span>
+                                    <span class="text-xs text-ink-muted block">Latence</span>
                                     <span class="font-mono text-sm font-semibold text-ink">{{ check.responseTimeMs }} ms</span>
                                 {% elseif monitor.type == 'smtp' and smtp %}
-                                    <span class="text-xs text-ink-muted block">Delivery Speed</span>
+                                    <span class="text-xs text-ink-muted block">Délai de livraison</span>
                                     <span class="font-mono text-sm font-semibold text-ink">
                                         {% if smtp.status == 'delivered' %}
                                             {{ smtp.delivery_time_seconds }} s
@@ -72,21 +72,21 @@
                             <div>
                                 {% if monitor.type == 'http' %}
                                     {% if check is null %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-paper-dim text-ink-muted">Pending</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-paper-dim text-ink-muted">En attente</span>
                                     {% elseif check.status == 'up' %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-signal/10 text-signal-dark">● UP</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-signal/10 text-signal-dark">● EN LIGNE</span>
                                     {% else %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-alert/10 text-alert">● DOWN</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-alert/10 text-alert">● HORS LIGNE</span>
                                     {% endif %}
                                 {% else %}
                                     {% if smtp is null %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-paper-dim text-ink-muted">Pending</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-paper-dim text-ink-muted">En attente</span>
                                     	{% elseif smtp.status == 'delivered' %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-signal/10 text-signal-dark">● DELIVERED</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-signal/10 text-signal-dark">● LIVRÉ</span>
                                     {% elseif smtp.status == 'sent' %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-paper-dim text-ink-muted">● SENT</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-paper-dim text-ink-muted">● ENVOYÉ</span>
                                     {% else %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-alert/10 text-alert">● FAILED</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-mono text-xs font-semibold bg-alert/10 text-alert">● ÉCHEC</span>
                                     {% endif %}
                                 {% endif %}
                             </div>

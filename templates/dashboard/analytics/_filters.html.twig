@@ -1,14 +1,14 @@
 <form method="GET" action="{{ path('workspace_analytics_index', {workspacePublicId: workspace.publicId}) }}" data-controller="auto-submit" class="flex items-center gap-3">
     <select name="period" data-action="change->auto-submit#submit"
             class="rounded-sm border-line text-sm py-2 pl-3 pr-8 focus:border-signal focus:ring-signal">
-        <option value="today" {{ period == 'today' ? 'selected' : '' }}>Today</option>
-        <option value="24h" {{ period == '24h' ? 'selected' : '' }}>Last 24 hours</option>
-        <option value="7d" {{ period == '7d' ? 'selected' : '' }}>Last 7 days</option>
-        <option value="30d" {{ period == '30d' ? 'selected' : '' }}>Last 30 days</option>
+        <option value="today" {{ period == 'today' ? 'selected' : '' }}>Aujourd'hui</option>
+        <option value="24h" {{ period == '24h' ? 'selected' : '' }}>Dernières 24 heures</option>
+        <option value="7d" {{ period == '7d' ? 'selected' : '' }}>7 derniers jours</option>
+        <option value="30d" {{ period == '30d' ? 'selected' : '' }}>30 derniers jours</option>
     </select>
     <select name="granularity" data-action="change->auto-submit#submit"
             class="rounded-sm border-line text-sm py-2 pl-3 pr-8 focus:border-signal focus:ring-signal">
-        <option value="hourly" {{ granularity == 'hourly' ? 'selected' : '' }}>Hourly</option>
-        <option value="daily" {{ granularity == 'daily' ? 'selected' : '' }}>Daily</option>
+        <option value="hourly" {{ granularity == 'hourly' ? 'selected' : '' }}>Horaire</option>
+        <option value="daily" {{ granularity == 'daily' ? 'selected' : '' }}>Quotidien</option>
     </select>
 </form>

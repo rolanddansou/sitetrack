@@ -8,9 +8,9 @@
     <div class="mb-6 flex justify-between items-start flex-wrap gap-4">
         <div>
             <a href="{{ path('workspace_monitor_show', {workspacePublicId: workspace.publicId, monitorPublicId: monitor.publicId}) }}" class="text-xs text-signal hover:text-signal-dark flex items-center gap-1 mb-2">
-                &larr; Back to {{ monitor.name }}
+                &larr; Retour à {{ monitor.name }}
             </a>
-            <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Incident Impact Report</h1>
+            <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Rapport d'impact des incidents</h1>
             <p class="text-sm font-body text-ink-muted mt-1">{{ report.rangeStart|date('Y-m-d') }} &ndash; {{ report.rangeEnd|date('Y-m-d') }}</p>
         </div>
 
@@ -18,23 +18,23 @@
             <form method="GET" action="{{ path('workspace_monitor_report', {workspacePublicId: workspace.publicId, monitorPublicId: monitor.publicId}) }}" data-controller="auto-submit" class="flex items-center gap-3">
                 <select name="period" data-action="change->auto-submit#submit"
                         class="rounded-sm border-line text-sm py-2 pl-3 pr-8 focus:border-signal focus:ring-signal">
-                    <option value="7d" {{ period == '7d' ? 'selected' : '' }}>Last 7 days</option>
-                    <option value="30d" {{ period == '30d' ? 'selected' : '' }}>Last 30 days</option>
-                    <option value="90d" {{ period == '90d' ? 'selected' : '' }}>Last 90 days</option>
+                    <option value="7d" {{ period == '7d' ? 'selected' : '' }}>7 derniers jours</option>
+                    <option value="30d" {{ period == '30d' ? 'selected' : '' }}>30 derniers jours</option>
+                    <option value="90d" {{ period == '90d' ? 'selected' : '' }}>90 derniers jours</option>
                 </select>
             </form>
             <a href="{{ path('workspace_monitor_report_pdf', {workspacePublicId: workspace.publicId, monitorPublicId: monitor.publicId, period: period}) }}"
                class="inline-flex items-center px-3 py-1.5 border border-line text-xs font-body font-semibold rounded-sm text-ink bg-white hover:bg-paper-dim">
-                Download PDF
+                Télécharger le PDF
             </a>
         </div>
     </div>
 
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-6">
-        {{ m.stat_card(report.uptimePercent ~ '%', 'Uptime') }}
+        {{ m.stat_card(report.uptimePercent ~ '%', 'Disponibilité') }}
         {{ m.stat_card(report.mttrMinutes is not null ? report.mttrMinutes ~ ' min' : '--', 'MTTR') }}
         {{ m.stat_card(report.incidentCount, 'Incidents') }}
-        {{ m.stat_card(report.totalEstimatedLostPageviews, 'Est. Lost Pageviews') }}
+        {{ m.stat_card(report.totalEstimatedLostPageviews, 'Pages vues perdues (est.)') }}
     </div>
 
     <div class="bg-white border border-line overflow-hidden">
@@ -42,25 +42,25 @@
             <h3 class="font-mono text-sm font-bold text-ink">Incidents</h3>
         </div>
         {% if report.incidents is empty %}
-            <p class="text-sm text-ink-muted text-center py-6">No incidents in this period.</p>
+            <p class="text-sm text-ink-muted text-center py-6">Aucun incident sur cette période.</p>
         {% else %}
             <table class="min-w-full divide-y divide-line text-xs">
                 <thead>
                     <tr class="bg-paper-dim text-ink-muted text-left uppercase">
-                        <th class="px-6 py-3 font-semibold">Triggered At</th>
-                        <th class="px-6 py-3 font-semibold">Duration</th>
+                        <th class="px-6 py-3 font-semibold">Déclenché à</th>
+                        <th class="px-6 py-3 font-semibold">Durée</th>
                         <th class="px-6 py-3 font-semibold">Condition</th>
-                        <th class="px-6 py-3 font-semibold">Pageviews During</th>
-                        <th class="px-6 py-3 font-semibold">Expected Baseline</th>
-                        <th class="px-6 py-3 font-semibold">Est. Lost Pageviews</th>
-                        <th class="px-6 py-3 font-semibold">Most Affected (baseline profile)</th>
+                        <th class="px-6 py-3 font-semibold">Pages vues pendant</th>
+                        <th class="px-6 py-3 font-semibold">Référence attendue</th>
+                        <th class="px-6 py-3 font-semibold">Pages vues perdues (est.)</th>
+                        <th class="px-6 py-3 font-semibold">Plus impacté (profil de référence)</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-line bg-white">
                     {% for inc in report.incidents %}
                         <tr>
                             <td class="px-6 py-3 font-mono text-ink-muted">{{ inc.triggeredAt|date('Y-m-d H:i:s') }}</td>
-                            <td class="px-6 py-3 font-mono text-ink">{{ inc.durationMinutes is not null ? inc.durationMinutes ~ ' min' : 'Ongoing' }}</td>
+                            <td class="px-6 py-3 font-mono text-ink">{{ inc.durationMinutes is not null ? inc.durationMinutes ~ ' min' : 'En cours' }}</td>
                             <td class="px-6 py-3 text-ink-muted">{{ inc.conditionType }}</td>
                             <td class="px-6 py-3 font-mono text-ink">{{ inc.pageviewsDuringIncident }}</td>
                             <td class="px-6 py-3 font-mono text-ink-muted">{{ inc.expectedPageviewsBaseline }}</td>
@@ -83,32 +83,32 @@
 
     <div class="bg-white border border-line p-6 mt-6">
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-            <h3 class="font-mono text-sm font-semibold text-ink-muted uppercase tracking-wider">Latency &times; Traffic</h3>
+            <h3 class="font-mono text-sm font-semibold text-ink-muted uppercase tracking-wider">Latence &times; Trafic</h3>
             {% if latencyTraffic.correlation is not null %}
                 {% set corr = latencyTraffic.correlation %}
                 {% set absCorr = corr < 0 ? -corr : corr %}
-                {% set strength = absCorr >= 0.7 ? 'Strong' : (absCorr >= 0.4 ? 'Moderate' : (absCorr >= 0.2 ? 'Weak' : 'Negligible')) %}
-                {% set direction = corr > 0 ? 'positive &mdash; latency rises with traffic' : (corr < 0 ? 'negative' : 'none') %}
+                {% set strength = absCorr >= 0.7 ? 'Forte' : (absCorr >= 0.4 ? 'Modérée' : (absCorr >= 0.2 ? 'Faible' : 'Négligeable')) %}
+                {% set direction = corr > 0 ? 'positive &mdash; la latence augmente avec le trafic' : (corr < 0 ? 'négative' : 'nulle') %}
                 <span class="text-xs font-mono {{ absCorr >= 0.4 ? 'text-alert' : 'text-ink-muted' }}">
                     {{ strength }} {{ direction|raw }} ({{ corr }})
                 </span>
             {% endif %}
         </div>
         {% if latencyTraffic.points is empty %}
-            <p class="text-sm text-ink-muted text-center py-6">Not enough data to chart.</p>
+            <p class="text-sm text-ink-muted text-center py-6">Pas assez de données pour un graphique.</p>
         {% else %}
             <canvas data-controller="chart"
                     data-chart-type-value="line"
                     data-chart-data-value="{{ latencyTrafficChartData|json_encode }}"
                     data-chart-options-value="{{ {
                         scales: {
-                            y: {type: 'linear', position: 'left', title: {display: true, text: 'Latency (ms)'}},
-                            y1: {type: 'linear', position: 'right', title: {display: true, text: 'Pageviews'}, grid: {drawOnChartArea: false}}
+                            y: {type: 'linear', position: 'left', title: {display: true, text: 'Latence (ms)'}},
+                            y1: {type: 'linear', position: 'right', title: {display: true, text: 'Pages vues'}, grid: {drawOnChartArea: false}}
                         }
                     }|json_encode }}"
                     data-chart-target="canvas"
                     height="90"></canvas>
-            <p class="mt-3 text-xs text-ink-muted">Daily average response latency (successful checks only) vs. daily pageviews. Correlation is not causation &mdash; a busier day isn't necessarily what slowed the response.</p>
+            <p class="mt-3 text-xs text-ink-muted">Latence moyenne quotidienne (checks réussis uniquement) comparée aux pages vues quotidiennes. Corrélation n'est pas causalité &mdash; une journée plus chargée n'est pas forcément ce qui a ralenti la réponse.</p>
         {% endif %}
     </div>
 </div>

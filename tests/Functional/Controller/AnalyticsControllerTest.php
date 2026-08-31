@@ -101,6 +101,19 @@ class AnalyticsControllerTest extends WebTestCase
         $this->assertSame('1', trim($crawler->filter('[data-kpi="pageviews"] p.text-2xl')->text()));
     }
 
+    public function testAnalyticsPageShowsFlagIconForKnownCountry(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser($client));
+
+        $this->insertEvent(['session_id' => 'session-a', 'country' => 'FR']);
+
+        $crawler = $client->request('GET', '/workspace/' . $this->workspacePublicId . '/analytics');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertGreaterThan(0, $crawler->filter('[data-icon="flags:fr"]')->count());
+    }
+
     public function testDateRangeFilterExcludesEventsOutsideRange(): void
     {
         $client = static::createClient();

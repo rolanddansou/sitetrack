@@ -1,27 +1,27 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ monitor.name }} Details - SiteTrack{% endblock %}
+{% block title %}{{ monitor.name }} - Détails - SiteTrack{% endblock %}
 
 {% block body %}
 <div class="px-4 sm:px-0">
     <div class="mb-6 flex justify-between items-start">
         <div>
             <a href="{{ path('workspace_availability_index', {workspacePublicId: workspace.publicId}) }}" class="text-xs text-signal hover:text-signal-dark flex items-center gap-1 mb-2">
-                &larr; Back to Dashboard
+                &larr; Retour au tableau de bord
             </a>
             <h1 class="text-2xl font-display font-bold tracking-tight text-ink flex items-center gap-2">
                 {{ ux_icon(monitor.type == 'http' ? 'heroicons:globe-alt' : 'heroicons:envelope', {class: 'w-6 h-6 text-signal'}) }}
                 <span>{{ monitor.name }}</span>
             </h1>
-            <p class="text-sm font-body text-ink-muted mt-1">Check interval: every {{ monitor.interval }} minutes.</p>
+            <p class="text-sm font-body text-ink-muted mt-1">Intervalle de vérification : toutes les {{ monitor.interval }} minutes.</p>
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ path('workspace_monitor_report', {workspacePublicId: workspace.publicId, monitorPublicId: monitor.publicId}) }}" class="inline-flex items-center px-3 py-1.5 border border-line text-xs font-body font-semibold rounded-sm text-ink bg-white hover:bg-paper-dim">
-                Report
+                Rapport
             </a>
-            <form method="POST" action="{{ path('workspace_monitor_delete', {workspacePublicId: workspace.publicId, monitorPublicId: monitor.publicId}) }}" onsubmit="return confirm('Are you sure you want to delete this monitor? This will also remove all logs.')">
+            <form method="POST" action="{{ path('workspace_monitor_delete', {workspacePublicId: workspace.publicId, monitorPublicId: monitor.publicId}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce moniteur ? Cela supprimera aussi tous ses journaux.')">
                 <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-alert/40 text-xs font-body font-semibold rounded-sm text-alert bg-white hover:bg-alert/5 focus:outline-none">
-                    Delete Monitor
+                    Supprimer le moniteur
                 </button>
             </form>
         </div>
@@ -34,37 +34,37 @@
         <div class="lg:col-span-2 space-y-6">
             <!-- Current Status Card -->
             <div class="bg-white border border-line p-6">
-                <h3 class="font-mono text-sm font-semibold text-ink-muted uppercase tracking-wider mb-2">Current Status</h3>
+                <h3 class="font-mono text-sm font-semibold text-ink-muted uppercase tracking-wider mb-2">Statut actuel</h3>
                 <div class="flex items-center space-x-3" data-monitor-live-target="status">
                     {% if monitor.type == 'http' %}
                         {% set lastCheck = recentChecks|first %}
                         {% if lastCheck is empty %}
                             <span class="h-4 w-4 bg-ink-muted rounded-full animate-pulse"></span>
-                            <span class="text-lg font-body font-bold text-ink-muted">No pings recorded yet</span>
+                            <span class="text-lg font-body font-bold text-ink-muted">Aucun ping enregistré pour le moment</span>
                         {% elseif lastCheck.status == 'up' %}
                             <span class="h-4 w-4 bg-signal rounded-full"></span>
-                            <span class="text-lg font-body font-bold text-signal-dark">Online</span>
-                            <span class="text-ink-muted text-xs">(Checked at {{ lastCheck.checkedAt|date('H:i:s') }})</span>
+                            <span class="text-lg font-body font-bold text-signal-dark">En ligne</span>
+                            <span class="text-ink-muted text-xs">(Vérifié à {{ lastCheck.checkedAt|date('H:i:s') }})</span>
                         {% else %}
                             <span class="h-4 w-4 bg-alert rounded-full animate-ping"></span>
-                            <span class="text-lg font-body font-bold text-alert">Offline</span>
+                            <span class="text-lg font-body font-bold text-alert">Hors ligne</span>
                             <span class="text-xs text-alert bg-alert/5 px-2 py-0.5 rounded ml-2">{{ lastCheck.errorMessage }}</span>
                         {% endif %}
                     {% else %}
                         {% set lastSmtp = smtpTests|first %}
                         {% if lastSmtp is empty %}
                             <span class="h-4 w-4 bg-ink-muted rounded-full animate-pulse"></span>
-                            <span class="text-lg font-body font-bold text-ink-muted">No test mail sent yet</span>
+                            <span class="text-lg font-body font-bold text-ink-muted">Aucun email de test envoyé pour le moment</span>
                         {% elseif lastSmtp.status == 'delivered' %}
                             <span class="h-4 w-4 bg-signal rounded-full"></span>
-                            <span class="text-lg font-body font-bold text-signal-dark">Operational</span>
-                            <span class="text-ink-muted text-xs">(Delivered in {{ lastSmtp.delivery_time_seconds }}s at {{ lastSmtp.received_at|date('H:i:s') }})</span>
+                            <span class="text-lg font-body font-bold text-signal-dark">Opérationnel</span>
+                            <span class="text-ink-muted text-xs">(Livré en {{ lastSmtp.delivery_time_seconds }}s à {{ lastSmtp.received_at|date('H:i:s') }})</span>
                         {% elseif lastSmtp.status == 'sent' %}
                             <span class="h-4 w-4 bg-ink-muted rounded-full animate-pulse"></span>
-                            <span class="text-lg font-body font-bold text-ink-muted">Awaiting Delivery Receipt...</span>
+                            <span class="text-lg font-body font-bold text-ink-muted">En attente de l'accusé de livraison...</span>
                         {% else %}
                             <span class="h-4 w-4 bg-alert rounded-full"></span>
-                            <span class="text-lg font-body font-bold text-alert">Failed / Timed Out</span>
+                            <span class="text-lg font-body font-bold text-alert">Échec / Délai dépassé</span>
                             <span class="text-xs text-alert bg-alert/5 px-2 py-0.5 rounded ml-2">{{ lastSmtp.error_message }}</span>
                         {% endif %}
                     {% endif %}
@@ -74,7 +74,7 @@
             <!-- Performance / History Chart -->
             <div class="bg-white border border-line p-6">
                 <h3 class="font-mono text-sm font-semibold text-ink-muted uppercase tracking-wider mb-4">
-                    {{ monitor.type == 'http' ? 'Response Latency (ms)' : 'Delivery Time (seconds)' }}
+                    {{ monitor.type == 'http' ? 'Latence de réponse (ms)' : 'Délai de livraison (secondes)' }}
                 </h3>
 
                 <div data-monitor-live-target="chart">
@@ -92,8 +92,8 @@
                         {% endfor %}
                     </div>
                     <div class="flex justify-between text-xs text-ink-muted mt-2">
-                        <span>Older</span>
-                        <span>Latest</span>
+                        <span>Plus ancien</span>
+                        <span>Plus récent</span>
                     </div>
                 {% elseif monitor.type == 'smtp' and smtpTests is not empty %}
                     {% set maxVal = 1 %}
@@ -110,11 +110,11 @@
                         {% endfor %}
                     </div>
                     <div class="flex justify-between text-xs text-ink-muted mt-2">
-                        <span>Older</span>
-                        <span>Latest</span>
+                        <span>Plus ancien</span>
+                        <span>Plus récent</span>
                     </div>
                 {% else %}
-                    <p class="text-sm text-ink-muted text-center py-6">Insufficient check data to render metrics.</p>
+                    <p class="text-sm text-ink-muted text-center py-6">Pas assez de données pour afficher les métriques.</p>
                 {% endif %}
                 </div>
             </div>
@@ -122,16 +122,16 @@
             <!-- Historical Log Table -->
             <div class="bg-white border border-line overflow-hidden">
                 <div class="px-6 py-4 border-b border-line bg-paper-dim">
-                    <h3 class="font-mono text-sm font-bold text-ink">Check History Logs</h3>
+                    <h3 class="font-mono text-sm font-bold text-ink">Historique des vérifications</h3>
                 </div>
                 {% if monitor.type == 'http' %}
                     <table class="min-w-full divide-y divide-line text-xs">
                         <thead>
                             <tr class="bg-paper-dim text-ink-muted text-left uppercase">
-                                <th class="px-6 py-3 font-semibold">Checked At</th>
-                                <th class="px-6 py-3 font-semibold">Status</th>
-                                <th class="px-6 py-3 font-semibold">Latency</th>
-                                <th class="px-6 py-3 font-semibold">Details</th>
+                                <th class="px-6 py-3 font-semibold">Vérifié à</th>
+                                <th class="px-6 py-3 font-semibold">Statut</th>
+                                <th class="px-6 py-3 font-semibold">Latence</th>
+                                <th class="px-6 py-3 font-semibold">Détails</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-line bg-white" data-monitor-live-target="table">
@@ -140,7 +140,7 @@
                                     <td class="px-6 py-3 font-mono text-ink-muted">{{ c.checkedAt|date('Y-m-d H:i:s') }}</td>
                                     <td class="px-6 py-3">
                                         <span class="px-2 py-0.5 rounded text-[10px] font-semibold {{ c.status == 'up' ? 'bg-signal/10 text-signal-dark' : 'bg-alert/10 text-alert' }}">
-                                            {{ c.status|upper }}
+                                            {{ c.status == 'up' ? 'EN LIGNE' : 'HORS LIGNE' }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-3 font-mono text-ink">{{ c.responseTimeMs }} ms</td>
@@ -153,11 +153,11 @@
                     <table class="min-w-full divide-y divide-line text-xs">
                         <thead>
                             <tr class="bg-paper-dim text-ink-muted text-left uppercase">
-                                <th class="px-6 py-3 font-semibold">Sent At</th>
-                                <th class="px-6 py-3 font-semibold">Received At</th>
-                                <th class="px-6 py-3 font-semibold">Delivery Time</th>
-                                <th class="px-6 py-3 font-semibold">Status</th>
-                                <th class="px-6 py-3 font-semibold">Headers</th>
+                                <th class="px-6 py-3 font-semibold">Envoyé à</th>
+                                <th class="px-6 py-3 font-semibold">Reçu à</th>
+                                <th class="px-6 py-3 font-semibold">Délai de livraison</th>
+                                <th class="px-6 py-3 font-semibold">Statut</th>
+                                <th class="px-6 py-3 font-semibold">En-têtes</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-line bg-white" data-monitor-live-target="table">
@@ -168,7 +168,7 @@
                                     <td class="px-6 py-3 font-mono text-ink">{{ t.delivery_time_seconds ? t.delivery_time_seconds ~ ' s' : '--' }}</td>
                                     <td class="px-6 py-3">
                                         <span class="px-2 py-0.5 rounded text-[10px] font-semibold {{ t.status == 'delivered' ? 'bg-signal/10 text-signal-dark' : (t.status == 'sent' ? 'bg-paper-dim text-ink-muted' : 'bg-alert/10 text-alert') }}">
-                                            {{ t.status|upper }}
+                                            {{ t.status == 'delivered' ? 'LIVRÉ' : (t.status == 'sent' ? 'ENVOYÉ' : 'ÉCHEC') }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-3 text-ink-muted">
@@ -189,19 +189,19 @@
         <div class="space-y-6">
             <!-- Alert Rules List -->
             <div class="bg-white border border-line p-6">
-                <h3 class="font-mono text-sm font-bold text-ink mb-4">Notification Channels</h3>
+                <h3 class="font-mono text-sm font-bold text-ink mb-4">Canaux de notification</h3>
                 {% if rules is empty %}
-                    <p class="text-xs text-ink-muted">No alert rules configured for this monitor. You won't be notified of failures!</p>
+                    <p class="text-xs text-ink-muted">Aucune règle d'alerte configurée pour ce moniteur. Vous ne serez pas averti en cas de panne !</p>
                 {% else %}
                     <ul class="space-y-3">
                         {% for r in rules %}
                             <li class="text-xs bg-paper-dim p-3 rounded border border-line flex justify-between items-center">
                                 <div>
-                                    <span class="font-mono font-semibold uppercase text-signal">{{ r.channel }}</span> to
+                                    <span class="font-mono font-semibold uppercase text-signal">{{ r.channel }}</span> vers
                                     <span class="text-ink-muted truncate block max-w-[150px] font-mono">{{ r.recipient }}</span>
-                                    <span class="text-[10px] text-ink-muted block">Trigger: {{ r.conditionType }} (thresh: {{ r.threshold }})</span>
+                                    <span class="text-[10px] text-ink-muted block">Déclencheur : {{ r.conditionType }} (seuil : {{ r.threshold }})</span>
                                 </div>
-                                <span class="text-[10px] text-ink-muted shrink-0">Cool: {{ r.cooldownMinutes }}m</span>
+                                <span class="text-[10px] text-ink-muted shrink-0">Pause : {{ r.cooldownMinutes }}m</span>
                             </li>
                         {% endfor %}
                     </ul>
@@ -209,20 +209,20 @@
 
                 <!-- Add Alert Rule Form -->
                 <div class="mt-6 border-t border-line pt-6">
-                    <h4 class="text-xs font-body font-bold text-ink uppercase tracking-wide mb-3">Add Channel Notification</h4>
+                    <h4 class="text-xs font-body font-bold text-ink uppercase tracking-wide mb-3">Ajouter un canal de notification</h4>
                     <form method="POST" action="{{ path('workspace_rule_new', {workspacePublicId: workspace.publicId, monitorPublicId: monitor.publicId}) }}" class="space-y-4">
                         <div>
-                            <label for="channel" class="block text-[10px] font-semibold uppercase text-ink-muted">Channel</label>
+                            <label for="channel" class="block text-[10px] font-semibold uppercase text-ink-muted">Canal</label>
                             <select name="channel" id="channel" class="mt-1 block w-full rounded-sm border-line text-xs p-1.5 border focus:border-signal focus:ring-signal">
                                 <option value="email">Email</option>
-                                <option value="slack">Slack Webhook</option>
-                                <option value="telegram">Telegram Bot (token:chatId)</option>
+                                <option value="slack">Webhook Slack</option>
+                                <option value="telegram">Bot Telegram (token:chatId)</option>
                             </select>
                         </div>
 
                         <div>
-                            <label for="recipient" class="block text-[10px] font-semibold uppercase text-ink-muted">Recipient / Endpoint</label>
-                            <input type="text" name="recipient" id="recipient" required placeholder="email@address.com or webhook url"
+                            <label for="recipient" class="block text-[10px] font-semibold uppercase text-ink-muted">Destinataire / Endpoint</label>
+                            <input type="text" name="recipient" id="recipient" required placeholder="email@address.com ou url du webhook"
                                    class="mt-1 block w-full rounded-sm border-line text-xs p-1.5 border focus:border-signal focus:ring-signal">
                         </div>
 
@@ -230,25 +230,25 @@
                             <div>
                                 <label for="condition_type" class="block text-[10px] font-semibold uppercase text-ink-muted">Condition</label>
                                 <select name="condition_type" id="condition_type" class="mt-1 block w-full rounded-sm border-line text-xs p-1.5 border focus:border-signal focus:ring-signal">
-                                    <option value="down_count">Failure Count</option>
-                                    <option value="latency_threshold">Latency limit</option>
+                                    <option value="down_count">Nombre d'échecs</option>
+                                    <option value="latency_threshold">Seuil de latence</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="threshold" class="block text-[10px] font-semibold uppercase text-ink-muted">Threshold</label>
+                                <label for="threshold" class="block text-[10px] font-semibold uppercase text-ink-muted">Seuil</label>
                                 <input type="number" name="threshold" id="threshold" value="1" required
                                        class="mt-1 block w-full rounded-sm border-line text-xs p-1.5 border focus:border-signal focus:ring-signal">
                             </div>
                         </div>
 
                         <div>
-                            <label for="cooldown_minutes" class="block text-[10px] font-semibold uppercase text-ink-muted">Cooldown (Minutes)</label>
+                            <label for="cooldown_minutes" class="block text-[10px] font-semibold uppercase text-ink-muted">Pause (minutes)</label>
                             <input type="number" name="cooldown_minutes" id="cooldown_minutes" value="60" required
                                    class="mt-1 block w-full rounded-sm border-line text-xs p-1.5 border focus:border-signal focus:ring-signal">
                         </div>
 
                         <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-xs font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark">
-                            Add Channel
+                            Ajouter le canal
                         </button>
                     </form>
                 </div>
@@ -256,25 +256,25 @@
 
             <!-- Incident History Card -->
             <div class="bg-white border border-line p-6">
-                <h3 class="font-mono text-sm font-bold text-ink mb-4">Incident Log</h3>
+                <h3 class="font-mono text-sm font-bold text-ink mb-4">Journal des incidents</h3>
                 <div data-monitor-live-target="incidents">
                 {% if incidents is empty %}
-                    <p class="text-xs text-ink-muted">No recent alert events logged.</p>
+                    <p class="text-xs text-ink-muted">Aucun événement d'alerte récent enregistré.</p>
                 {% else %}
                     <ul class="space-y-3">
                         {% for inc in incidents %}
                             <li class="text-[10px] bg-paper-dim p-2 rounded border border-line">
                                 <div class="flex justify-between items-center mb-1">
                                     <span class="font-mono font-bold text-alert">INCIDENT #{{ inc.id }}</span>
-                                    <span class="font-semibold text-ink-muted">Trigger: {{ inc.condition_type }}</span>
+                                    <span class="font-semibold text-ink-muted">Déclencheur : {{ inc.condition_type }}</span>
                                 </div>
                                 <div class="text-ink-muted mb-1">
-                                    Triggered at {{ inc.triggered_at }}
+                                    Déclenché à {{ inc.triggered_at }}
                                 </div>
                                 <div class="flex justify-between items-center text-[9px] text-ink-muted">
-                                    <span>Notified: {{ inc.notified ? 'Yes' : 'No' }}</span>
+                                    <span>Notifié : {{ inc.notified ? 'Oui' : 'Non' }}</span>
                                     <span class="font-mono {{ inc.status == 'resolved' ? 'text-signal-dark font-bold' : 'text-ink-muted font-bold' }}">
-                                        {{ inc.status|upper }} {% if inc.resolved_at %}(at {{ inc.resolved_at }}){% endif %}
+                                        {{ inc.status == 'resolved' ? 'RÉSOLU' : 'DÉCLENCHÉ' }} {% if inc.resolved_at %}(à {{ inc.resolved_at }}){% endif %}
                                     </span>
                                 </div>
                             </li>

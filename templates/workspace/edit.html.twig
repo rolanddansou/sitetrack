@@ -1,20 +1,20 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Rename Workspace - SiteTrack{% endblock %}
+{% block title %}Renommer le workspace - SiteTrack{% endblock %}
 
 {% block body %}
 <div class="max-w-lg mx-auto px-4 sm:px-0">
     <div class="mb-6">
         <a href="{{ path('workspace_dashboard_index', {workspacePublicId: workspace.publicId}) }}" class="text-xs text-signal hover:text-signal-dark flex items-center gap-1 mb-2">
-            &larr; Back to Dashboard
+            &larr; Retour au tableau de bord
         </a>
-        <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Rename Workspace</h1>
+        <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Renommer le workspace</h1>
     </div>
 
     <div class="bg-white border border-line p-6">
         <form method="POST" action="{{ path('workspace_edit', {workspacePublicId: workspace.publicId}) }}" class="space-y-6">
             <div>
-                <label for="name" class="block text-sm font-body font-semibold text-ink">Workspace Name</label>
+                <label for="name" class="block text-sm font-body font-semibold text-ink">Nom du workspace</label>
                 <input type="text" name="name" id="name" value="{{ dto.name }}" required
                        class="mt-1 block w-full rounded-sm border-line focus:border-signal focus:ring-signal sm:text-sm p-2 border">
                 {% if errors.name is defined %}
@@ -24,7 +24,7 @@
 
             <div class="pt-4 flex justify-end gap-3 border-t border-line">
                 <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-medium rounded-sm text-paper bg-signal hover:bg-signal-dark">
-                    Save
+                    Enregistrer
                 </button>
             </div>
         </form>

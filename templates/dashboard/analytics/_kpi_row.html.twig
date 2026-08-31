@@ -1,29 +1,29 @@
 {% import 'components/_macros.html.twig' as m %}
 <div class="flex flex-wrap divide-x divide-line">
     <div class="pr-6" data-kpi="visitors">
-        <p class="text-xs font-medium text-ink-muted">Visitors</p>
+        <p class="text-xs font-medium text-ink-muted">Visiteurs</p>
         <p class="mt-1 text-2xl font-mono font-bold text-ink tabular-nums">{{ uniqueVisitors }}</p>
         {{ m.kpi_delta(visitorsDelta) }}
     </div>
     <div class="px-6" data-kpi="pageviews">
-        <p class="text-xs font-medium text-ink-muted">Pageviews</p>
+        <p class="text-xs font-medium text-ink-muted">Pages vues</p>
         <p class="mt-1 text-2xl font-mono font-bold text-ink tabular-nums">{{ pageviews }}</p>
         {{ m.kpi_delta(pageviewsDelta) }}
     </div>
     <div class="px-6" data-kpi="bounce-rate">
-        <p class="text-xs font-medium text-ink-muted">Bounce rate</p>
+        <p class="text-xs font-medium text-ink-muted">Taux de rebond</p>
         <p class="mt-1 text-2xl font-mono font-bold text-ink tabular-nums">{{ bounceRate }}%</p>
         {{ m.kpi_delta(bounceRateDelta) }}
     </div>
     <div class="px-6" data-kpi="session-time">
-        <p class="text-xs font-medium text-ink-muted">Session time</p>
+        <p class="text-xs font-medium text-ink-muted">Durée de session</p>
         <p class="mt-1 text-2xl font-mono font-bold text-ink tabular-nums">{{ avgSessionDuration }}</p>
         {{ m.kpi_delta(sessionTimeDelta) }}
     </div>
 
     <div class="pl-6" data-kpi="online-now" data-controller="online-now" data-online-now-url-value="{{ path('workspace_analytics_online_now', {workspacePublicId: workspace.publicId}) }}">
         <p class="text-xs font-medium text-ink-muted flex items-center gap-1.5">
-            Online
+            En ligne
             <span class="w-2 h-2 rounded-full bg-signal inline-block"></span>
         </p>
         <p class="mt-1 text-2xl font-mono font-bold text-ink tabular-nums" data-online-now-target="count">{{ onlineNow }}</p>

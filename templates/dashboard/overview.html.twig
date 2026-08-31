@@ -1,10 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Dashboard - SiteTrack{% endblock %}
+{% block title %}Tableau de bord - SiteTrack{% endblock %}
 
 {% block body %}
 <div class="px-4 sm:px-0 mb-6">
-    <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Dashboard</h1>
+    <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Tableau de bord</h1>
     <p class="mt-1 text-sm font-body text-ink-muted">Aperçu de la disponibilité de vos moniteurs et de votre trafic.</p>
 </div>
 
@@ -40,7 +40,7 @@
 
     <div class="bg-white border border-line p-6">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="font-mono text-sm font-bold text-ink uppercase tracking-wider">Analytics <span class="text-ink-muted font-normal normal-case">· 7 derniers jours</span></h2>
+            <h2 class="font-mono text-sm font-bold text-ink uppercase tracking-wider">Statistiques <span class="text-ink-muted font-normal normal-case">· 7 derniers jours</span></h2>
             <a href="{{ path('workspace_analytics_index', {workspacePublicId: workspace.publicId}) }}" class="text-xs font-medium text-signal hover:text-signal-dark">Voir tout →</a>
         </div>
 

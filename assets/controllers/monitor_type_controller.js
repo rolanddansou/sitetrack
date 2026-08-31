@@ -21,11 +21,11 @@ export default class extends Controller {
         this.smtpFieldsTarget.classList.toggle('hidden', isHttp);
 
         if (isHttp) {
-            this.targetLabelTarget.textContent = 'Target URL';
-            this.targetHelpTarget.textContent = 'Example: https://your-website.com/health';
+            this.targetLabelTarget.textContent = 'URL cible';
+            this.targetHelpTarget.textContent = 'Exemple : https://votre-site.com/health';
         } else {
-            this.targetLabelTarget.textContent = 'SMTP Server Host & Port';
-            this.targetHelpTarget.textContent = 'Example: smtp.postmarkapp.com:587';
+            this.targetLabelTarget.textContent = 'Hôte et port du serveur SMTP';
+            this.targetHelpTarget.textContent = 'Exemple : smtp.postmarkapp.com:587';
         }
     }
 }

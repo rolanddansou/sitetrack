@@ -115,7 +115,7 @@ export default class extends Controller {
         if (bars.length === 0) {
             const empty = document.createElement('p');
             empty.className = 'text-sm text-ink-muted text-center py-6';
-            empty.textContent = 'Insufficient check data to render metrics.';
+            empty.textContent = 'Pas assez de données pour afficher les métriques.';
             target.appendChild(empty);
             return;
         }
@@ -133,9 +133,9 @@ export default class extends Controller {
         const labels = document.createElement('div');
         labels.className = 'flex justify-between text-xs text-ink-muted mt-2';
         const older = document.createElement('span');
-        older.textContent = 'Older';
+        older.textContent = 'Plus ancien';
         const latest = document.createElement('span');
-        latest.textContent = 'Latest';
+        latest.textContent = 'Plus récent';
         labels.append(older, latest);
 
         target.append(barsContainer, labels);
@@ -150,7 +150,7 @@ export default class extends Controller {
 
             if (monitorType === 'http') {
                 tr.appendChild(cell(row.checkedAt, 'px-6 py-3 font-mono text-ink-muted'));
-                tr.appendChild(badgeCell(row.status.toUpperCase(), row.status === 'up' ? 'bg-signal/10 text-signal-dark' : 'bg-alert/10 text-alert'));
+                tr.appendChild(badgeCell(row.status === 'up' ? 'EN LIGNE' : 'HORS LIGNE', row.status === 'up' ? 'bg-signal/10 text-signal-dark' : 'bg-alert/10 text-alert'));
                 tr.appendChild(cell(`${row.responseTimeMs} ms`, 'px-6 py-3 font-mono text-ink'));
                 tr.appendChild(cell(row.errorMessage || '--', 'px-6 py-3 text-ink-muted truncate max-w-xs'));
             } else {
@@ -161,7 +161,8 @@ export default class extends Controller {
                 const badgeClass = row.status === 'delivered'
                     ? 'bg-signal/10 text-signal-dark'
                     : (row.status === 'sent' ? 'bg-paper-dim text-ink-muted' : 'bg-alert/10 text-alert');
-                tr.appendChild(badgeCell(row.status.toUpperCase(), badgeClass));
+                const badgeLabel = row.status === 'delivered' ? 'LIVRÉ' : (row.status === 'sent' ? 'ENVOYÉ' : 'ÉCHEC');
+                tr.appendChild(badgeCell(badgeLabel, badgeClass));
 
                 const headersTd = document.createElement('td');
                 headersTd.className = 'px-6 py-3 text-ink-muted';
@@ -183,7 +184,7 @@ export default class extends Controller {
         if (incidents.length === 0) {
             const empty = document.createElement('p');
             empty.className = 'text-xs text-ink-muted';
-            empty.textContent = 'No recent alert events logged.';
+            empty.textContent = "Aucun événement d'alerte récent enregistré.";
             target.appendChild(empty);
             return;
         }
@@ -202,20 +203,20 @@ export default class extends Controller {
             idSpan.textContent = `INCIDENT #${inc.id}`;
             const triggerSpan = document.createElement('span');
             triggerSpan.className = 'font-semibold text-ink-muted';
-            triggerSpan.textContent = `Trigger: ${inc.conditionType}`;
+            triggerSpan.textContent = `Déclencheur : ${inc.conditionType}`;
             row1.append(idSpan, triggerSpan);
 
             const row2 = document.createElement('div');
             row2.className = 'text-ink-muted mb-1';
-            row2.textContent = `Triggered at ${inc.triggeredAt}`;
+            row2.textContent = `Déclenché à ${inc.triggeredAt}`;
 
             const row3 = document.createElement('div');
             row3.className = 'flex justify-between items-center text-[9px] text-ink-muted';
             const notifiedSpan = document.createElement('span');
-            notifiedSpan.textContent = `Notified: ${inc.notified ? 'Yes' : 'No'}`;
+            notifiedSpan.textContent = `Notifié : ${inc.notified ? 'Oui' : 'Non'}`;
             const statusSpan = document.createElement('span');
             statusSpan.className = `font-mono ${inc.status === 'resolved' ? 'text-signal-dark font-bold' : 'text-ink-muted font-bold'}`;
-            statusSpan.textContent = `${inc.status.toUpperCase()}${inc.resolvedAt ? ` (at ${inc.resolvedAt})` : ''}`;
+            statusSpan.textContent = `${inc.status === 'resolved' ? 'RÉSOLU' : 'DÉCLENCHÉ'}${inc.resolvedAt ? ` (à ${inc.resolvedAt})` : ''}`;
             row3.append(notifiedSpan, statusSpan);
 
             li.append(row1, row2, row3);

@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Workspace Report - SiteTrack{% endblock %}
+{% block title %}Rapport du workspace - SiteTrack{% endblock %}
 
 {% block body %}
 {% import 'components/_macros.html.twig' as m %}
@@ -8,44 +8,44 @@
     <div class="mb-6 flex justify-between items-start flex-wrap gap-4">
         <div>
             <a href="{{ path('workspace_availability_index', {workspacePublicId: workspace.publicId}) }}" class="text-xs text-signal hover:text-signal-dark flex items-center gap-1 mb-2">
-                &larr; Back to Availability
+                &larr; Retour à la disponibilité
             </a>
-            <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Workspace Report</h1>
-            <p class="text-sm font-body text-ink-muted mt-1">All monitors &middot; {{ report.rangeStart|date('Y-m-d') }} &ndash; {{ report.rangeEnd|date('Y-m-d') }}</p>
+            <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Rapport du workspace</h1>
+            <p class="text-sm font-body text-ink-muted mt-1">Tous les moniteurs &middot; {{ report.rangeStart|date('Y-m-d') }} &ndash; {{ report.rangeEnd|date('Y-m-d') }}</p>
         </div>
 
         <form method="GET" action="{{ path('workspace_report', {workspacePublicId: workspace.publicId}) }}" data-controller="auto-submit" class="flex items-center gap-3">
             <select name="period" data-action="change->auto-submit#submit"
                     class="rounded-sm border-line text-sm py-2 pl-3 pr-8 focus:border-signal focus:ring-signal">
-                <option value="7d" {{ period == '7d' ? 'selected' : '' }}>Last 7 days</option>
-                <option value="30d" {{ period == '30d' ? 'selected' : '' }}>Last 30 days</option>
-                <option value="90d" {{ period == '90d' ? 'selected' : '' }}>Last 90 days</option>
+                <option value="7d" {{ period == '7d' ? 'selected' : '' }}>7 derniers jours</option>
+                <option value="30d" {{ period == '30d' ? 'selected' : '' }}>30 derniers jours</option>
+                <option value="90d" {{ period == '90d' ? 'selected' : '' }}>90 derniers jours</option>
             </select>
         </form>
     </div>
 
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-6">
-        {{ m.stat_card(report.uptimePercent ~ '%', 'Overall Uptime') }}
+        {{ m.stat_card(report.uptimePercent ~ '%', 'Disponibilité globale') }}
         {{ m.stat_card(report.mttrMinutes is not null ? report.mttrMinutes ~ ' min' : '--', 'MTTR') }}
-        {{ m.stat_card(report.incidentCount, 'Total Incidents') }}
-        {{ m.stat_card(report.totalEstimatedLostPageviews, 'Est. Lost Pageviews') }}
+        {{ m.stat_card(report.incidentCount, 'Total des incidents') }}
+        {{ m.stat_card(report.totalEstimatedLostPageviews, 'Pages vues perdues (est.)') }}
     </div>
 
     <div class="bg-white border border-line overflow-hidden">
         <div class="px-6 py-4 border-b border-line bg-paper-dim">
-            <h3 class="font-mono text-sm font-bold text-ink">Monitors Comparison</h3>
+            <h3 class="font-mono text-sm font-bold text-ink">Comparaison des moniteurs</h3>
         </div>
         {% if report.monitorReports is empty %}
-            <p class="text-sm text-ink-muted text-center py-6">No active monitors in this workspace.</p>
+            <p class="text-sm text-ink-muted text-center py-6">Aucun moniteur actif dans ce workspace.</p>
         {% else %}
             <table class="min-w-full divide-y divide-line text-xs">
                 <thead>
                     <tr class="bg-paper-dim text-ink-muted text-left uppercase">
-                        <th class="px-6 py-3 font-semibold">Monitor</th>
-                        <th class="px-6 py-3 font-semibold">Uptime</th>
+                        <th class="px-6 py-3 font-semibold">Moniteur</th>
+                        <th class="px-6 py-3 font-semibold">Disponibilité</th>
                         <th class="px-6 py-3 font-semibold">MTTR</th>
                         <th class="px-6 py-3 font-semibold">Incidents</th>
-                        <th class="px-6 py-3 font-semibold">Est. Lost Pageviews</th>
+                        <th class="px-6 py-3 font-semibold">Pages vues perdues (est.)</th>
                         <th class="px-6 py-3 font-semibold"></th>
                     </tr>
                 </thead>
@@ -59,7 +59,7 @@
                             <td class="px-6 py-3 font-mono {{ ms.report.totalEstimatedLostPageviews > 0 ? 'text-alert' : 'text-ink-muted' }}">{{ ms.report.totalEstimatedLostPageviews }}</td>
                             <td class="px-6 py-3">
                                 <a href="{{ path('workspace_monitor_report', {workspacePublicId: workspace.publicId, monitorPublicId: ms.monitorPublicId, period: period}) }}" class="text-signal hover:text-signal-dark">
-                                    Details &rarr;
+                                    Détails &rarr;
                                 </a>
                             </td>
                         </tr>

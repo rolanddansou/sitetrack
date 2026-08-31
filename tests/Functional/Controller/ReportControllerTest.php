@@ -216,7 +216,7 @@ class ReportControllerTest extends WebTestCase
         $client->request('GET', '/workspace/' . $this->workspacePublicId . '/monitor/' . $monitor->getPublicId() . '/report?period=30d');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextContains('body', 'Strong');
+        $this->assertSelectorTextContains('body', 'Forte');
         $this->assertSelectorTextContains('body', '(1)');
     }
 

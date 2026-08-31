@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Incident Report - {{ monitor.name }}</title>
+    <title>Rapport d'incidents - {{ monitor.name }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #111827; }
         h1 { font-size: 18px; margin-bottom: 4px; }
@@ -19,37 +19,37 @@
     </style>
 </head>
 <body>
-    <h1>Incident Impact Report &mdash; {{ monitor.name }}</h1>
-    <p class="subtitle">{{ report.rangeStart|date('Y-m-d') }} to {{ report.rangeEnd|date('Y-m-d') }} ({{ period }})</p>
+    <h1>Rapport d'impact des incidents &mdash; {{ monitor.name }}</h1>
+    <p class="subtitle">{{ report.rangeStart|date('Y-m-d') }} au {{ report.rangeEnd|date('Y-m-d') }} ({{ period }})</p>
 
     <table class="stats">
         <tr>
-            <td><span class="value">{{ report.uptimePercent }}%</span><span class="label">Uptime</span></td>
+            <td><span class="value">{{ report.uptimePercent }}%</span><span class="label">Disponibilité</span></td>
             <td><span class="value">{{ report.mttrMinutes is not null ? report.mttrMinutes ~ ' min' : '--' }}</span><span class="label">MTTR</span></td>
             <td><span class="value">{{ report.incidentCount }}</span><span class="label">Incidents</span></td>
-            <td><span class="value">{{ report.totalEstimatedLostPageviews }}</span><span class="label">Est. Lost Pageviews</span></td>
+            <td><span class="value">{{ report.totalEstimatedLostPageviews }}</span><span class="label">Pages vues perdues (est.)</span></td>
         </tr>
     </table>
 
     {% if report.incidents is empty %}
-        <p class="empty">No incidents in this period.</p>
+        <p class="empty">Aucun incident sur cette période.</p>
     {% else %}
         <table class="incidents">
             <thead>
                 <tr>
-                    <th>Triggered At</th>
-                    <th>Duration</th>
+                    <th>Déclenché à</th>
+                    <th>Durée</th>
                     <th>Condition</th>
-                    <th>Pageviews During</th>
-                    <th>Expected Baseline</th>
-                    <th>Est. Lost</th>
+                    <th>Pages vues pendant</th>
+                    <th>Référence attendue</th>
+                    <th>Perdues (est.)</th>
                 </tr>
             </thead>
             <tbody>
                 {% for inc in report.incidents %}
                     <tr>
                         <td>{{ inc.triggeredAt|date('Y-m-d H:i:s') }}</td>
-                        <td>{{ inc.durationMinutes is not null ? inc.durationMinutes ~ ' min' : 'Ongoing' }}</td>
+                        <td>{{ inc.durationMinutes is not null ? inc.durationMinutes ~ ' min' : 'En cours' }}</td>
                         <td>{{ inc.conditionType }}</td>
                         <td>{{ inc.pageviewsDuringIncident }}</td>
                         <td>{{ inc.expectedPageviewsBaseline }}</td>

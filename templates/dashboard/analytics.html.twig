@@ -1,16 +1,16 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Analytics Dashboard - SiteTrack{% endblock %}
+{% block title %}Tableau de bord Statistiques - SiteTrack{% endblock %}
 
 {% block body %}
 <div class="px-4 sm:px-0 mb-6 flex flex-wrap items-center justify-between gap-4">
     <div>
-        <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Simple Web Analytics</h1>
-        <p class="mt-1 text-sm font-body text-ink-muted">Privacy-first, cookie-less website analytics. No cookies stored, ever.</p>
+        <h1 class="text-2xl font-display font-bold tracking-tight text-ink">Statistiques web simples</h1>
+        <p class="mt-1 text-sm font-body text-ink-muted">Analyse de site web respectueuse de la vie privée, sans cookies. Aucun cookie stocké, jamais.</p>
     </div>
     <div class="flex items-center gap-3">
         <a href="{{ path('workspace_analytics_crosstab', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-3 py-1.5 border border-line text-xs font-body font-semibold rounded-sm text-ink bg-white hover:bg-paper-dim">
-            Cross-tab
+            Tableau croisé
         </a>
         {% include 'dashboard/analytics/_filters.html.twig' %}
     </div>
@@ -36,11 +36,11 @@
         {% include 'dashboard/analytics/_tech.html.twig' %}
 
         <div class="bg-white border border-line p-6">
-            <h3 class="font-mono text-xs font-bold text-ink uppercase tracking-wider mb-2">Tracked Site ID</h3>
+            <h3 class="font-mono text-xs font-bold text-ink uppercase tracking-wider mb-2">Identifiant du site suivi</h3>
             <code class="block w-full rounded bg-paper-dim border border-line text-xs p-2 text-ink mb-4">{{ siteId }}</code>
 
-            <h3 class="font-mono text-xs font-bold text-ink uppercase tracking-wider mb-3">Install script</h3>
-            <p class="text-xs text-ink-muted mb-4">Paste this lightweight tracking script into the <code>&lt;head&gt;</code> of your website.</p>
+            <h3 class="font-mono text-xs font-bold text-ink uppercase tracking-wider mb-3">Script d'installation</h3>
+            <p class="text-xs text-ink-muted mb-4">Collez ce script de suivi léger dans le <code>&lt;head&gt;</code> de votre site.</p>
             <div class="bg-ink text-paper font-mono text-[10px] p-3 rounded overflow-x-auto leading-relaxed">
                 &lt;script src="{{ app.request.schemeAndHttpHost }}/collect/event.js" data-site="{{ siteId }}" async&gt;&lt;/script&gt;
             </div>

@@ -112,13 +112,18 @@
         {% for tab in tabs %}
             <div class="{{ not loop.first ? 'hidden' : '' }}" data-tabs-target="panel">
                 {% if tab.rows is empty %}
-                    <p class="text-xs text-ink-muted p-6 text-center">No data yet.</p>
+                    <p class="text-xs text-ink-muted p-6 text-center">Aucune donnée pour le moment.</p>
                 {% else %}
                     <table class="min-w-full divide-y divide-line text-xs">
                         <tbody class="divide-y divide-line bg-white">
                             {% for row in tab.rows %}
                                 <tr class="hover:bg-paper-dim">
-                                    <td class="px-6 py-3 font-medium text-ink truncate max-w-xs">{{ row.label ?: 'Unknown' }}</td>
+                                    <td class="px-6 py-3 font-medium text-ink max-w-xs">
+                                        <span class="inline-flex items-center gap-2 min-w-0"{{ row.icon is defined and row.icon ? (' data-icon="' ~ row.icon ~ '"')|raw : '' }}>
+                                            {% if row.icon is defined and row.icon %}{{ ux_icon(row.icon, {class: 'w-4 h-4 shrink-0'}) }}{% endif %}
+                                            <span class="truncate min-w-0">{{ row.label ?: 'Unknown' }}</span>
+                                        </span>
+                                    </td>
                                     <td class="px-6 py-3 text-right font-mono text-ink-muted font-semibold">{{ row.count }}</td>
                                 </tr>
                             {% endfor %}

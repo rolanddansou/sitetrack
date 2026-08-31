@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}SiteTrack - Solopreneur Ops Suite{% endblock %}</title>
+        <title>{% block title %}SiteTrack - Suite d'opérations pour solopreneurs{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>📡</text></svg>">
 
         {% block stylesheets %}{% include 'components/_stylesheets.html.twig' %}{% endblock %}
@@ -22,16 +22,16 @@
                         {% if workspace is defined and workspace %}
                             <nav class="hidden sm:ml-6 sm:flex sm:space-x-8">
                                 <a href="{{ path('workspace_dashboard_index', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') == 'workspace_dashboard_index' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
-                                    Dashboard
+                                    Tableau de bord
                                 </a>
                                 <a href="{{ path('workspace_availability_index', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'workspace_availability' or app.request.attributes.get('_route') starts with 'workspace_monitor' or app.request.attributes.get('_route') == 'workspace_rule_new' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
                                     Disponibilité
                                 </a>
                                 <a href="{{ path('workspace_analytics_index', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'workspace_analytics' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
-                                    Analytics
+                                    Statistiques
                                 </a>
                                 <a href="{{ path('workspace_report', {workspacePublicId: workspace.publicId}) }}" class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ app.request.attributes.get('_route') starts with 'workspace_report' or app.request.attributes.get('_route') starts with 'workspace_monitor_report' ? 'border-signal text-ink' : 'border-transparent text-ink-muted hover:border-line hover:text-ink' }}">
-                                    BI
+                                    Rapports
                                 </a>
                             </nav>
                         {% endif %}
@@ -58,14 +58,14 @@
                                             {% endfor %}
                                         </ul>
                                         <div class="border-t border-line py-1">
-                                            <a href="{{ path('workspace_edit', {workspacePublicId: workspace.publicId}) }}" class="block px-4 py-2 text-sm text-ink-muted hover:bg-paper-dim">Rename this workspace</a>
-                                            <a href="{{ path('workspace_new') }}" class="block px-4 py-2 text-sm text-signal hover:bg-paper-dim">+ Create workspace</a>
+                                            <a href="{{ path('workspace_edit', {workspacePublicId: workspace.publicId}) }}" class="block px-4 py-2 text-sm text-ink-muted hover:bg-paper-dim">Renommer ce workspace</a>
+                                            <a href="{{ path('workspace_new') }}" class="block px-4 py-2 text-sm text-signal hover:bg-paper-dim">+ Créer un workspace</a>
                                         </div>
                                     </div>
                                 </div>
                             {% endif %}
                             <span class="font-mono text-xs text-ink-muted">{{ app.user.userIdentifier }}</span>
-                            <a href="{{ path('app_logout') }}" class="text-sm font-medium text-ink-muted hover:text-ink">Log out</a>
+                            <a href="{{ path('app_logout') }}" class="text-sm font-medium text-ink-muted hover:text-ink">Déconnexion</a>
                         </div>
                     {% endif %}
 
@@ -117,7 +117,7 @@
                         {% endif %}
                         <div class="flex items-center justify-between border-t border-line pt-3">
                             <span class="font-mono text-xs text-ink-muted">{{ app.user.userIdentifier }}</span>
-                            <a href="{{ path('app_logout') }}" class="text-sm font-medium text-ink-muted hover:text-ink">Log out</a>
+                            <a href="{{ path('app_logout') }}" class="text-sm font-medium text-ink-muted hover:text-ink">Déconnexion</a>
                         </div>
                     </div>
                 {% endif %}
@@ -141,7 +141,7 @@
 
         <footer class="bg-paper-dim border-t border-line py-4">
             <div class="max-w-7xl mx-auto px-4 text-center font-mono text-[11px] text-ink-muted">
-                &copy; 2026 SiteTrack. Minimalist Operations Suite for Solopreneurs.
+                &copy; 2026 SiteTrack. Suite d'opérations minimaliste pour solopreneurs.
             </div>
         </footer>
     </body>

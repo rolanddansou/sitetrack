@@ -17,7 +17,7 @@ class ChannelClassifier
     public function classify(?string $referrer, ?string $utmSource, ?string $utmMedium): string
     {
         if ($utmMedium !== null && in_array(strtolower($utmMedium), ['social', 'social-media', 'social_media'], true)) {
-            return 'Organic Social';
+            return 'Social organique';
         }
 
         if ($referrer === null || $referrer === '') {
@@ -31,16 +31,16 @@ class ChannelClassifier
 
         foreach (self::SOCIAL_HOSTS as $needle) {
             if (str_contains($host, $needle)) {
-                return 'Organic Social';
+                return 'Social organique';
             }
         }
 
         foreach (self::SEARCH_ENGINE_HOSTS as $needle) {
             if (str_contains($host, $needle)) {
-                return 'Organic Search';
+                return 'Recherche organique';
             }
         }
 
-        return 'Referral';
+        return 'Référent';
     }
 }

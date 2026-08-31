@@ -39,7 +39,7 @@ class WorkspaceController extends AbstractController
             } else {
                 $workspace = new Workspace($this->currentTenantResolver->resolve(), $dto->name);
                 $this->workspaceRepository->save($workspace);
-                $this->addFlash('success', 'Workspace created successfully.');
+                $this->addFlash('success', 'Workspace créé avec succès.');
                 return $this->redirectToRoute('workspace_dashboard_index', ['workspacePublicId' => $workspace->getPublicId()]);
             }
         }
@@ -68,7 +68,7 @@ class WorkspaceController extends AbstractController
             } else {
                 $workspace->setName($dto->name);
                 $this->workspaceRepository->save($workspace);
-                $this->addFlash('success', 'Workspace renamed successfully.');
+                $this->addFlash('success', 'Workspace renommé avec succès.');
                 return $this->redirectToRoute('workspace_dashboard_index', ['workspacePublicId' => $workspace->getPublicId()]);
             }
         }
