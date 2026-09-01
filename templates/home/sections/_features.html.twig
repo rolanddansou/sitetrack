@@ -1,13 +1,13 @@
 <section id="features" class="py-20 bg-paper-dim">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {% import 'components/_macros.html.twig' as m %}
-        {{ m.section_heading('Features', 'Everything your site\'s health depends on', 'Four tools, one dashboard, no context switching.') }}
+        {{ m.section_heading('Fonctionnalités', 'Tout ce dont dépend la santé de votre site', 'Quatre outils, un tableau de bord, zéro changement de contexte.') }}
 
         <div class="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {{ m.feature_card('heroicons:signal', 'Uptime monitoring', 'HTTP(S) checks on the schedule you choose — status code, response time, and an optional regex match on the response body.', 'SIGNAL · UPTIME') }}
-            {{ m.feature_card('heroicons:envelope', 'SMTP deliverability', 'The check nobody else offers standalone: we send a real test email through your SMTP server and confirm it actually arrives, with SPF/DKIM/DMARC and spam-score results.', 'SIGNAL · SMTP', true) }}
-            {{ m.feature_card('heroicons:bell-alert', 'Smart alerting', 'Email, Slack, or Telegram — with cooldowns so one incident doesn\'t become fifty notifications.', 'REACT · ALERTS') }}
-            {{ m.feature_card('heroicons:chart-bar', 'Privacy-first analytics', 'Cookie-less pageview and event tracking. No cookie banner needed, no visitor data sold, ever.', 'SIGNAL · TRAFFIC') }}
+            {{ m.feature_card('heroicons:signal', 'Supervision de disponibilité', 'Vérifications HTTP(S) sur le planning de votre choix — code de statut, temps de réponse, et une expression régulière optionnelle sur le corps de la réponse.', 'SIGNAL · UPTIME') }}
+            {{ m.feature_card('heroicons:envelope', 'Délivrabilité SMTP', 'La vérification que personne d\'autre n\'offre seule : nous envoyons un vrai email test via votre serveur SMTP et confirmons qu\'il arrive, avec les résultats SPF/DKIM/DMARC et le score spam.', 'SIGNAL · SMTP', true) }}
+            {{ m.feature_card('heroicons:bell-alert', 'Alertes intelligentes', 'Email, Slack ou Telegram — avec des cooldowns pour qu\'un seul incident ne devienne pas cinquante notifications.', 'RÉAGIR · ALERTES') }}
+            {{ m.feature_card('heroicons:chart-bar', 'Analytics respectueux de la vie privée', 'Suivi des pages vues et des événements sans cookies. Aucune bannière de consentement nécessaire, aucune donnée visiteur revendue, jamais.', 'SIGNAL · TRAFIC') }}
         </div>
     </div>
 </section>

@@ -1,43 +1,19 @@
 {% import 'components/_macros.html.twig' as m %}
-<section class="pt-20 sm:pt-28">
+<section class="pt-16 pb-16 sm:pt-24 sm:pb-20">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <p class="font-mono text-xs font-medium text-signal tracking-[0.2em] uppercase">Uptime · SMTP · Analytics</p>
         <h1 class="mt-4 text-4xl font-display font-bold tracking-tight text-ink sm:text-6xl">
-            One dashboard for the three signals that tell you your product is alive
+            Un seul tableau de bord pour les trois signaux vitaux de votre produit
         </h1>
         <p class="mt-6 text-lg font-body text-ink-muted">
-            SiteTrack replaces separate uptime, SMTP deliverability, and analytics subscriptions with one minimalist
-            suite built for solopreneurs. Know your site is up, your emails are landing, and where your visitors come from.
+            SiteTrack remplace vos abonnements uptime, délivrabilité SMTP et analytics par une suite minimaliste
+            pensée pour les solopreneurs. Sachez que votre site répond, que vos emails arrivent, et d'où viennent vos visiteurs.
         </p>
-        <div class="mt-10 flex items-center justify-center gap-4">
-            {{ m.button('Get started', path('app_login')) }}
-            {{ m.button('See how it works', '#how-it-works', 'secondary') }}
+        <div class="mt-8 flex items-center justify-center gap-4">
+            {{ m.button('Commencer', path('app_login')) }}
+            {{ m.button('Voir comment ça marche', '#how-it-works', 'secondary') }}
         </div>
-        {# TODO: confirm actual trial terms #}
-        <p class="mt-4 font-mono text-xs text-ink-muted">14-day free trial · no card required</p>
-    </div>
-
-    {% set events = [
-        {dot: '●', color: 'text-signal', text: 'GET acme.dev/health · 200 · 118ms'},
-        {dot: '✓', color: 'text-signal', text: 'SMTP relay → delivered · 1.4s'},
-        {dot: '●', color: 'text-ink-muted', text: 'pageview /pricing · direct'},
-        {dot: '●', color: 'text-signal', text: 'GET api.acme.dev/status · 200 · 42ms'},
-        {dot: '✕', color: 'text-alert', text: 'SMTP relay → timeout · retry scheduled'},
-        {dot: '●', color: 'text-ink-muted', text: 'pageview /docs · organic search'},
-        {dot: '✓', color: 'text-signal', text: 'SPF · DKIM · DMARC all passing'},
-        {dot: '●', color: 'text-signal', text: 'GET acme.dev/checkout · 200 · 96ms'},
-    ] %}
-    <div class="mt-16 border-y border-line bg-white overflow-hidden" role="presentation">
-        <div class="flex ticker-track w-max">
-            {% for copy in [1, 2] %}
-                <div class="flex items-center shrink-0" aria-hidden="{{ copy == 2 ? 'true' : 'false' }}">
-                    {% for event in events %}
-                        <span class="flex items-center gap-2 py-3 pr-10 font-mono text-xs whitespace-nowrap {{ event.color }}">
-                            <span aria-hidden="true">{{ event.dot }}</span>{{ event.text }}
-                        </span>
-                    {% endfor %}
-                </div>
-            {% endfor %}
-        </div>
+        {# TODO: confirmer les conditions d'essai réelles #}
+        <p class="mt-4 font-mono text-xs text-ink-muted">Essai gratuit de 14 jours · sans carte bancaire</p>
     </div>
 </section>

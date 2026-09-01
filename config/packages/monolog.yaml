@@ -94,7 +94,21 @@ when@prod:
                 max_files: 7
                 channels: ["performance"]
 
-            # Alertes ERROR -> ADMIN + SUPER_ADMIN
+            # Wraps error_mailer below so a transient failure sending the alert
+            # itself (e.g. the SMTP relay timing out) can never crash whatever
+            # request/command triggered the log — WhatFailureGroupHandler
+            # swallows any exception thrown by its members instead of letting
+            # it propagate. Hit this in production: a Hostinger SMTP timeout
+            # while delivering an error-alert email crashed schedule:run and
+            # took a scheduled task down with it. Same "never take down the
+            # caller" rule NotificationSender already applies to in-app alert
+            # delivery (see CLAUDE.md's Alerting section).
+            error_alerts:
+                type: whatfailuregroup
+                members: [error_mailer]
+                channels: ["!deprecation", "!event"]
+
+            # Alertes ERROR -> ADMIN + SUPER_ADMIN (nested inside error_alerts above)
             error_mailer:
                 type: fingers_crossed
                 action_level: error
@@ -102,7 +116,6 @@ when@prod:
                 buffer_size: 50
                 stop_buffering: false
                 excluded_http_codes: [404, 405, 410]
-                channels: ["!deprecation", "!event"]
 
             # native_mailer would silently ignore `mailer:` and send through
             # PHP's mail() instead of the error_mailer SMTP transport below —

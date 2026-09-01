@@ -1,11 +1,11 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Log in - SiteTrack{% endblock %}
+{% block title %}Se connecter - SiteTrack{% endblock %}
 
 {% block body %}
     <div class="max-w-md mx-auto mt-12 px-4 sm:px-0">
         <div class="bg-white border border-line p-8">
-            <h1 class="text-xl font-display font-bold text-ink mb-1">Log in</h1>
+            <h1 class="text-xl font-display font-bold text-ink mb-1">Se connecter</h1>
             <p class="text-sm text-ink-muted mb-6">Accédez à votre tableau de bord SiteTrack.</p>
 
             {% if error %}
@@ -22,7 +22,7 @@
                 </div>
 
                 <div>
-                    <label for="password" class="block text-sm font-body font-semibold text-ink">Password</label>
+                    <label for="password" class="block text-sm font-body font-semibold text-ink">Mot de passe</label>
                     <input type="password" name="_password" id="password" required
                            class="mt-1 block w-full rounded-sm border-line focus:border-signal focus:ring-signal sm:text-sm p-2 border">
                 </div>
@@ -31,7 +31,7 @@
 
                 <button type="submit"
                         class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark">
-                    Log in
+                    Se connecter
                 </button>
             </form>
         </div>

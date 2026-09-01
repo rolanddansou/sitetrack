@@ -1,31 +1,31 @@
-{# TODO: confirm real pricing before launch — figures below are illustrative #}
+{# TODO: confirmer les tarifs réels avant le lancement — les chiffres ci-dessous sont indicatifs #}
 <section id="pricing" class="py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {% import 'components/_macros.html.twig' as m %}
-        {{ m.section_heading('Pricing', 'Simple pricing, no surprises', 'Start free. Upgrade when you need SMTP checks and more monitors.') }}
+        {{ m.section_heading('Tarifs', 'Une tarification simple, sans surprise', 'Commencez gratuitement. Passez à l\'offre supérieure pour les vérifications SMTP et plus de moniteurs.') }}
 
         <div class="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {{ m.pricing_card('Starter', '$0', 'month', [
-                'Up to 3 HTTP monitors',
-                '5-minute check interval',
-                'Email alerts',
-                '30 days of history'
-            ], 'Start for free', path('app_login')) }}
+            {{ m.pricing_card('Starter', '0 €', 'mois', [
+                'Jusqu\'à 3 moniteurs HTTP',
+                'Vérification toutes les 5 minutes',
+                'Alertes par email',
+                '30 jours d\'historique'
+            ], 'Démarrer gratuitement', path('app_login')) }}
 
-            {{ m.pricing_card('Pro', '$19', 'month', [
-                'Unlimited HTTP monitors',
-                'SMTP deliverability checks',
-                'Email, Slack & Telegram alerts',
-                'Privacy-first analytics',
-                '1 year of history'
-            ], 'Get started', path('app_login'), true) }}
+            {{ m.pricing_card('Pro', '19 €', 'mois', [
+                'Moniteurs HTTP illimités',
+                'Vérifications de délivrabilité SMTP',
+                'Alertes email, Slack et Telegram',
+                'Analytics respectueux de la vie privée',
+                '1 an d\'historique'
+            ], 'Commencer', path('app_login'), true) }}
 
-            {{ m.pricing_card('Team', '$49', 'month', [
-                'Everything in Pro',
-                'Unlimited team members',
-                'Multiple tenants/workspaces',
-                'Priority support'
-            ], 'Get started', path('app_login')) }}
+            {{ m.pricing_card('Team', '49 €', 'mois', [
+                'Tout ce qui est inclus dans Pro',
+                'Membres d\'équipe illimités',
+                'Plusieurs tenants/workspaces',
+                'Support prioritaire'
+            ], 'Commencer', path('app_login')) }}
         </div>
     </div>
 </section>

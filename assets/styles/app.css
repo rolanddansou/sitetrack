@@ -324,9 +324,6 @@
   .mt-8 {
     margin-top: calc(var(--spacing) * 8);
   }
-  .mt-10 {
-    margin-top: calc(var(--spacing) * 10);
-  }
   .mt-12 {
     margin-top: calc(var(--spacing) * 12);
   }
@@ -438,17 +435,11 @@
   .w-full {
     width: 100%;
   }
-  .w-max {
-    width: max-content;
-  }
   .max-w-2xl {
     max-width: var(--container-2xl);
   }
   .max-w-3xl {
     max-width: var(--container-3xl);
-  }
-  .max-w-4xl {
-    max-width: var(--container-4xl);
   }
   .max-w-5xl {
     max-width: var(--container-5xl);
@@ -649,10 +640,6 @@
     border-style: var(--tw-border-style);
     border-width: 1px;
   }
-  .border-y {
-    border-block-style: var(--tw-border-style);
-    border-block-width: 1px;
-  }
   .border-t {
     border-top-style: var(--tw-border-style);
     border-top-width: 1px;
@@ -840,17 +827,14 @@
   .pt-6 {
     padding-top: calc(var(--spacing) * 6);
   }
-  .pt-20 {
-    padding-top: calc(var(--spacing) * 20);
+  .pt-16 {
+    padding-top: calc(var(--spacing) * 16);
   }
   .pr-6 {
     padding-right: calc(var(--spacing) * 6);
   }
   .pr-8 {
     padding-right: calc(var(--spacing) * 8);
-  }
-  .pr-10 {
-    padding-right: calc(var(--spacing) * 10);
   }
   .pb-3 {
     padding-bottom: calc(var(--spacing) * 3);
@@ -1147,8 +1131,14 @@
     .sm\:px-6 {
       padding-inline: calc(var(--spacing) * 6);
     }
-    .sm\:pt-28 {
-      padding-top: calc(var(--spacing) * 28);
+    .sm\:pt-24 {
+      padding-top: calc(var(--spacing) * 24);
+    }
+    .sm\:pb-20 {
+      padding-bottom: calc(var(--spacing) * 20);
+    }
+    .sm\:text-left {
+      text-align: left;
     }
     .sm\:text-4xl {
       font-size: var(--text-4xl);
@@ -1243,22 +1233,6 @@
   font-weight: 500;
   font-style: normal;
   font-display: swap;
-}
-@keyframes ticker-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-.ticker-track {
-  animation: ticker-scroll 32s linear infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .ticker-track {
-    animation: none;
-  }
 }
 @property --tw-rotate-x {
   syntax: "*";

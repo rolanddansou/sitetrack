@@ -75,7 +75,7 @@
 {% macro pricing_card(name, price, period, features, cta_label, cta_href, featured = false) %}
     <div class="bg-white border {{ featured ? 'border-signal' : 'border-line' }} p-8 flex flex-col relative">
         {% if featured %}
-            <span class="absolute -top-3 left-8 px-2 py-0.5 bg-signal font-mono text-[10px] font-medium text-paper tracking-widest uppercase">Most popular</span>
+            <span class="absolute -top-3 left-8 px-2 py-0.5 bg-signal font-mono text-[10px] font-medium text-paper tracking-widest uppercase">Le plus populaire</span>
         {% endif %}
         <h3 class="font-body text-lg font-semibold text-ink">{{ name }}</h3>
         <p class="mt-4 flex items-baseline">

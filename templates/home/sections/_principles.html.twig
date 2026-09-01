@@ -1,0 +1,29 @@
+{# Deliberately not customer testimonials — this is a new product with no
+   real quotes to show yet, and shipping fabricated ones would be worse than
+   showing none. Three honest, product-fact statements instead, styled as
+   big mono-numeral stats to match the KPI voice used everywhere else on
+   this page (hero ticker latencies, stat strip, pricing figures). #}
+<section class="py-20 bg-paper-dim">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% import 'components/_macros.html.twig' as m %}
+        {{ m.section_heading('Sans compromis', 'Ce que vous n\'aurez plus à gérer', 'Trois choses en moins, pas trois de plus.') }}
+
+        <div class="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-10">
+            <div class="text-center sm:text-left">
+                <p class="font-mono text-4xl font-bold text-signal">0</p>
+                <h3 class="mt-3 text-base font-body font-semibold text-ink">Bannière cookie</h3>
+                <p class="mt-2 text-sm font-body text-ink-muted">L'analytics ne dépose aucun cookie : rien à faire valider par vos visiteurs.</p>
+            </div>
+            <div class="text-center sm:text-left">
+                <p class="font-mono text-4xl font-bold text-signal">0</p>
+                <h3 class="mt-3 text-base font-body font-semibold text-ink">Alerte en trop</h3>
+                <p class="mt-2 text-sm font-body text-ink-muted">Cooldowns et déduplication intégrés : un incident ne devient jamais cinquante notifications.</p>
+            </div>
+            <div class="text-center sm:text-left">
+                <p class="font-mono text-4xl font-bold text-signal">0</p>
+                <h3 class="mt-3 text-base font-body font-semibold text-ink">Onglet supplémentaire</h3>
+                <p class="mt-2 text-sm font-body text-ink-muted">Uptime, SMTP et analytics vivent dans un seul tableau de bord — pas cinq abonnements différents.</p>
+            </div>
+        </div>
+    </div>
+</section>

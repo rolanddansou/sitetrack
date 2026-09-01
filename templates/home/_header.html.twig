@@ -9,14 +9,14 @@
             {% if app.user %}
                 <a href="{{ path('dashboard_index') }}"
                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark">
-                    Go to dashboard
+                    Aller au tableau de bord
                 </a>
             {% else %}
                 <div class="flex items-center gap-6">
-                    <a href="{{ path('app_login') }}" class="text-sm font-body font-medium text-ink-muted hover:text-ink">Log in</a>
+                    <a href="{{ path('app_login') }}" class="text-sm font-body font-medium text-ink-muted hover:text-ink">Se connecter</a>
                     <a href="{{ path('app_login') }}"
                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-body font-semibold rounded-sm text-paper bg-signal hover:bg-signal-dark">
-                        Get started
+                        Commencer
                     </a>
                 </div>
             {% endif %}

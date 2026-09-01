@@ -1,14 +1,14 @@
 <section id="faq" class="py-20 bg-paper-dim">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {% import 'components/_macros.html.twig' as m %}
-        {{ m.section_heading('FAQ', 'Frequently asked questions') }}
+        {{ m.section_heading('FAQ', 'Questions fréquentes') }}
 
         <div class="mt-12">
-            {{ m.faq_item('How does the SMTP deliverability check actually work?', 'We send a real email through your SMTP server to a verification mailbox we control, then confirm it arrived — measuring delivery time and checking SPF, DKIM, DMARC, and spam score. It catches problems a simple uptime check never would, like an expired DKIM key or a port silently blocked by your host.') }}
-            {{ m.faq_item('Is the analytics really cookie-less?', 'Yes. We generate a session identifier from a daily-rotating hash — no cookies are set, and no visitor data is sold or shared. You typically won\'t need a cookie consent banner for it.') }}
-            {{ m.faq_item('Which alert channels are supported?', 'Email, Slack, and Telegram today. Each alert rule has its own cooldown so a flapping check doesn\'t flood your channel with repeat notifications.') }}
-            {{ m.faq_item('Do I need to install anything on my server?', 'No. Uptime checks are external HTTP requests; the analytics script is a single small `<script>` tag you add to your site.') }}
-            {{ m.faq_item('Can I monitor more than one site?', 'Yes — how many depends on your plan. See the pricing section above.') }}
+            {{ m.faq_item('Comment fonctionne concrètement la vérification de délivrabilité SMTP ?', 'Nous envoyons un vrai email via votre serveur SMTP vers une boîte de vérification que nous contrôlons, puis confirmons son arrivée — en mesurant le délai de livraison et en vérifiant SPF, DKIM, DMARC et le score spam. Ça détecte des problèmes qu\'une simple vérification de disponibilité ne verrait jamais, comme une clé DKIM expirée ou un port silencieusement bloqué par votre hébergeur.') }}
+            {{ m.faq_item('L\'analytics est-il vraiment sans cookies ?', 'Oui. Nous générons un identifiant de session à partir d\'un hachage à rotation quotidienne — aucun cookie n\'est déposé, et aucune donnée visiteur n\'est vendue ou partagée. Vous n\'aurez généralement pas besoin de bannière de consentement pour ça.') }}
+            {{ m.faq_item('Quels canaux d\'alerte sont pris en charge ?', 'Email, Slack et Telegram aujourd\'hui. Chaque règle d\'alerte a son propre cooldown pour qu\'une vérification instable n\'inonde pas votre canal de notifications répétées.') }}
+            {{ m.faq_item('Dois-je installer quelque chose sur mon serveur ?', 'Non. Les vérifications de disponibilité sont des requêtes HTTP externes ; le script d\'analytics est une simple balise `<script>` à ajouter à votre site.') }}
+            {{ m.faq_item('Puis-je surveiller plusieurs sites ?', 'Oui — le nombre dépend de votre offre. Voir la section tarifs ci-dessus.') }}
         </div>
     </div>
 </section>
