@@ -64,6 +64,42 @@
     };
     window.addEventListener('popstate', pageview);
 
+    // Heartbeat, like Google Analytics' engagement pings: without this, a
+    // visitor who lands on a page and just reads it (no click, no route
+    // change) sends exactly one event and silently drops out of "online now"
+    // a few minutes later even though they're still on the page. Only ticks
+    // while the tab is actually visible, matching GA's own behaviour of not
+    // counting backgrounded time as engagement.
+    var HEARTBEAT_INTERVAL_MS = 20000;
+    var heartbeatTimer = null;
+
+    function heartbeat() {
+        send('heartbeat');
+    }
+
+    function startHeartbeat() {
+        if (heartbeatTimer) return;
+        heartbeatTimer = setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
+    }
+
+    function stopHeartbeat() {
+        if (heartbeatTimer) {
+            clearInterval(heartbeatTimer);
+            heartbeatTimer = null;
+        }
+    }
+
+    if (document.visibilityState === 'visible') {
+        startHeartbeat();
+    }
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+            startHeartbeat();
+        } else {
+            stopHeartbeat();
+        }
+    });
+
     // Public API for custom events: sitetrack.track('signup', {plan: 'pro'})
     window.sitetrack = {
         track: function (name, props) {

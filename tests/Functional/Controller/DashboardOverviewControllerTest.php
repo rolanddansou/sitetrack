@@ -262,6 +262,37 @@ class DashboardOverviewControllerTest extends WebTestCase
         $this->assertSame('FR', $data['pins'][0]['country']);
     }
 
+    public function testLiveGlobeCountsHeartbeatsButExcludesThemFromTheFeed(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createLoggedInUser());
+
+        // The pageview itself is outside the online window (visitor landed
+        // 6 minutes ago) but a heartbeat 1 minute ago proves they're still
+        // reading the page — this must keep the session "online" and its
+        // pin on the globe, without resurrecting it in the pageview feed.
+        $this->insertPageview('session-reader', 'DE', '/docs', '-6 minutes');
+        $this->connection->insert('analytics_events', [
+            'site_id' => $this->siteId,
+            'path' => '/docs',
+            'country' => 'DE',
+            'session_id' => 'session-reader',
+            'occurred_at' => (new \DateTimeImmutable('-1 minute'))->format('Y-m-d H:i:s'),
+            'event_type' => 'heartbeat',
+        ]);
+
+        $client->request('GET', '/workspace/' . $this->workspacePublicId . '/dashboard/live-globe');
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertSame(1, $data['online'], 'a recent heartbeat keeps the session online');
+        $this->assertSame(1, $data['onlineCountries']);
+        $this->assertCount(1, $data['pins']);
+        $this->assertSame('DE', $data['pins'][0]['country']);
+        $this->assertSame([], $data['feed'], 'heartbeats are not page visits, so they must not appear in the feed');
+    }
+
     public function testLiveGlobeFeedExcludesActivityOutsideTheOnlineWindow(): void
     {
         $client = static::createClient();

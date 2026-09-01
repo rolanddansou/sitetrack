@@ -17,7 +17,12 @@ use Doctrine\DBAL\Query\QueryBuilder;
  */
 class AnalyticsQueryService
 {
-    /** "Online now" is a recent-activity proxy, not a real-time heartbeat — event.js sends nothing while a visitor is idle on a page. */
+    /**
+     * "Online now" is a recent-activity proxy. event.js sends a 'pageview'
+     * on load/navigation and, while the tab stays visible, a 'heartbeat'
+     * roughly every 20s — the same reason a page read for minutes without
+     * clicking anything still counts as "online" in Google Analytics.
+     */
     private const ONLINE_WINDOW_MINUTES = 5;
 
     /** Columns that {@see groupBy()} is allowed to select — never build this from request input. */
@@ -183,8 +188,8 @@ class AnalyticsQueryService
 
     /**
      * Countries with at least one session active in the last {@see ONLINE_WINDOW_MINUTES}
-     * minutes — pageview-scoped deliberately (unlike {@see countOnlineNow()}, which has
-     * never filtered by event_type): a country pin only makes sense for a page visit.
+     * minutes — pageview OR heartbeat, same as {@see countOnlineNow()}, so a pin doesn't
+     * vanish off the globe while its visitor is still reading the page they landed on.
      *
      * @return array<int, array{country: ?string, count: int}>
      */
@@ -196,13 +201,14 @@ class AnalyticsQueryService
             ->select('country, COUNT(DISTINCT session_id) as count')
             ->from('analytics_events')
             ->where('site_id = :siteId')
-            ->andWhere('event_type = :eventType')
+            ->andWhere('(event_type = :eventType OR event_type = :heartbeatType)')
             ->andWhere('occurred_at >= :cutoff')
             ->andWhere('country IS NOT NULL')
             ->groupBy('country')
             ->orderBy('count', 'DESC')
             ->setParameter('siteId', $siteId)
             ->setParameter('eventType', 'pageview')
+            ->setParameter('heartbeatType', 'heartbeat')
             ->setParameter('cutoff', $cutoff)
             ->executeQuery()
             ->fetchAllAssociative();
