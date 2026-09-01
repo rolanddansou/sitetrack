@@ -25,6 +25,8 @@ class AnalyticsEventDto
         public readonly ?string $osVersion = null,
         public readonly string $eventType = 'pageview',
         public readonly ?string $eventName = null,
-        public readonly ?array $eventProps = null
+        public readonly ?array $eventProps = null,
+        public readonly ?int $screenWidth = null,
+        public readonly ?int $screenHeight = null
     ) {}
 }

@@ -82,4 +82,56 @@ class AnalyticsApiControllerTest extends WebTestCase
         $after = (int) $this->connection->fetchOne('SELECT COUNT(*) FROM messenger_messages');
         $this->assertSame($before + 1, $after);
     }
+
+    public function testValidPayloadWithScreenDimensionsEnqueuesThem(): void
+    {
+        $client = static::createClient();
+        $this->connection = static::getContainer()->get(Connection::class);
+
+        $client->request(
+            'POST',
+            '/api/event',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'site_id' => 'test-site',
+                'path' => '/',
+                'screen_width' => 1920,
+                'screen_height' => 1080,
+            ])
+        );
+
+        $this->assertResponseStatusCodeSame(204);
+
+        $body = (string) $this->connection->fetchOne('SELECT body FROM messenger_messages ORDER BY id DESC LIMIT 1');
+        $this->assertStringContainsString('i:1920', $body);
+        $this->assertStringContainsString('i:1080', $body);
+    }
+
+    public function testImplausibleScreenDimensionsAreDroppedInsteadOfStored(): void
+    {
+        $client = static::createClient();
+        $this->connection = static::getContainer()->get(Connection::class);
+
+        $client->request(
+            'POST',
+            '/api/event',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'site_id' => 'test-site',
+                'path' => '/',
+                'screen_width' => -5,
+                'screen_height' => 999999,
+            ])
+        );
+
+        $this->assertResponseStatusCodeSame(204);
+
+        $body = (string) $this->connection->fetchOne('SELECT body FROM messenger_messages ORDER BY id DESC LIMIT 1');
+        $this->assertStringNotContainsString('i:-5', $body);
+        $this->assertStringNotContainsString('i:999999', $body);
+    }
 }

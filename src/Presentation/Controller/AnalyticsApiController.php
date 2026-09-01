@@ -83,7 +83,9 @@ class AnalyticsApiController extends AbstractController
             osVersion: $ua['osVersion'],
             eventType: $this->stringField($data, 'event_type', 20) ?? 'pageview',
             eventName: $this->stringField($data, 'event_name', 255),
-            eventProps: is_array($eventProps) ? $eventProps : null
+            eventProps: is_array($eventProps) ? $eventProps : null,
+            screenWidth: $this->positiveIntField($data, 'screen_width'),
+            screenHeight: $this->positiveIntField($data, 'screen_height')
         );
 
         $messageBus->dispatch(new AnalyticsEventMessage($dto));
@@ -99,6 +101,22 @@ class AnalyticsApiController extends AbstractController
         }
 
         return mb_substr($value, 0, $maxLength);
+    }
+
+    /**
+     * Screen dimensions are client-reported and untrusted — anything not a
+     * plausible positive pixel count is dropped rather than stored as-is.
+     */
+    private function positiveIntField(array $data, string $key): ?int
+    {
+        $value = $data[$key] ?? null;
+        if (!is_int($value) && !is_float($value)) {
+            return null;
+        }
+
+        $value = (int) $value;
+
+        return $value > 0 && $value <= 20000 ? $value : null;
     }
 
     private function corsResponse(Response $response): Response

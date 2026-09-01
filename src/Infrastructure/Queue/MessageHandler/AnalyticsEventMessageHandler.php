@@ -37,6 +37,8 @@ class AnalyticsEventMessageHandler
             'event_type' => $dto->eventType,
             'event_name' => $dto->eventName,
             'event_props' => $dto->eventProps !== null ? json_encode($dto->eventProps) : null,
+            'screen_width' => $dto->screenWidth,
+            'screen_height' => $dto->screenHeight,
         ]);
     }
 }
