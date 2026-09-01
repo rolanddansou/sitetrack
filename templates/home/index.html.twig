@@ -1,9 +1,11 @@
 {% extends 'base_public.html.twig' %}
 
 {% block title %}SiteTrack — Uptime, SMTP et Analytics respectueux de la vie privée{% endblock %}
+{% block description %}SiteTrack remplace vos abonnements uptime, délivrabilité SMTP et analytics par une suite minimaliste pensée pour les solopreneurs. Essai gratuit de 14 jours, sans carte bancaire.{% endblock %}
 
 {% block body %}
     {% include 'home/sections/_hero.html.twig' %}
+    {% include 'home/sections/_product_preview.html.twig' %}
     {% include 'home/sections/_features.html.twig' %}
     {% include 'home/sections/_how_it_works.html.twig' %}
     {% include 'home/sections/_principles.html.twig' %}

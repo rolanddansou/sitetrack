@@ -1,0 +1,123 @@
+{# Static product showcase — the real dashboard overview markup and the
+   real globe canvas (globe_controller.js), fed fixed demo data instead of
+   a live workspace. No data-globe-url-value is set, so the controller
+   skips polling entirely (see globe_controller.js's connect()) rather than
+   trying to fetch an authenticated endpoint anonymous visitors can't reach. #}
+{% set demoMonitors = {up: 8, down: 0, pending: 1} %}
+{% set demoAnalytics = {visitors: 1248, pageviews: 3902, bounceRate: 41.2} %}
+{% set demoGlobe = {
+    online: 7,
+    onlineCountries: 4,
+    pins: [
+        {country: 'FR', countryName: 'France', count: 3},
+        {country: 'US', countryName: 'États-Unis', count: 2},
+        {country: 'CA', countryName: 'Canada', count: 1},
+        {country: 'DE', countryName: 'Allemagne', count: 1}
+    ],
+    feed: [
+        {country: 'FR', countryName: 'France', path: '/pricing', relativeTime: "à l'instant"},
+        {country: 'CA', countryName: 'Canada', path: '/docs', relativeTime: 'il y a 2 min'}
+    ]
+} %}
+{% set demoCountries = [
+    {label: 'FR', name: 'France', count: 482},
+    {label: 'US', name: 'États-Unis', count: 310},
+    {label: 'CA', name: 'Canada', count: 96},
+    {label: 'DE', name: 'Allemagne', count: 54},
+    {label: 'BR', name: 'Brésil', count: 31}
+] %}
+
+<section class="pb-16 sm:pb-20">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="border border-line bg-white p-4 sm:p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="border border-line p-6">
+                    <h2 class="font-mono text-sm font-bold text-ink uppercase tracking-wider mb-4">Disponibilité</h2>
+                    <div class="grid grid-cols-3 divide-x divide-line">
+                        <div class="text-center">
+                            <p class="text-2xl font-mono font-bold text-signal-dark tabular-nums">{{ demoMonitors.up }}</p>
+                            <p class="mt-1 text-xs font-medium text-ink-muted">En ligne</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-mono font-bold text-alert tabular-nums">{{ demoMonitors.down }}</p>
+                            <p class="mt-1 text-xs font-medium text-ink-muted">En panne</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-mono font-bold text-ink-muted tabular-nums">{{ demoMonitors.pending }}</p>
+                            <p class="mt-1 text-xs font-medium text-ink-muted">En attente</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-line p-6">
+                    <h2 class="font-mono text-sm font-bold text-ink uppercase tracking-wider mb-4">Statistiques <span class="text-ink-muted font-normal normal-case">· 7 derniers jours</span></h2>
+                    <div class="grid grid-cols-3 divide-x divide-line">
+                        <div class="text-center">
+                            <p class="text-2xl font-mono font-bold text-ink tabular-nums">{{ demoAnalytics.visitors }}</p>
+                            <p class="mt-1 text-xs font-medium text-ink-muted">Visiteurs</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-mono font-bold text-ink tabular-nums">{{ demoAnalytics.pageviews }}</p>
+                            <p class="mt-1 text-xs font-medium text-ink-muted">Pages vues</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-mono font-bold text-ink tabular-nums">{{ demoAnalytics.bounceRate }}%</p>
+                            <p class="mt-1 text-xs font-medium text-ink-muted">Taux de rebond</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 border border-line p-6"
+                 data-controller="globe"
+                 data-globe-initial-value="{{ demoGlobe|json_encode }}">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-mono text-sm font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-signal animate-pulse"></span>
+                        Qui est en ligne
+                    </h2>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="flex items-center justify-center">
+                        <canvas data-globe-target="canvas"></canvas>
+                    </div>
+
+                    <div class="min-w-0">
+                        <p class="text-3xl font-mono font-bold text-ink tabular-nums" data-globe-target="count">{{ demoGlobe.online }}</p>
+                        <p class="text-sm text-ink-muted">
+                            personne(s) sur le site en ce moment · depuis
+                            <span class="font-mono" data-globe-target="countries">{{ demoGlobe.onlineCountries }}</span> pays
+                        </p>
+                        <p class="mt-1 font-mono text-xs text-ink-muted">128 400 visites depuis le 01/01/2026</p>
+
+                        <ul class="mt-4 divide-y divide-line" data-globe-target="feed">
+                            {% for item in demoGlobe.feed %}
+                                <li class="py-2 flex items-center justify-between gap-4">
+                                    <span class="text-sm text-ink-muted truncate">
+                                        <span class="text-xs text-ink-muted mr-2">{{ item.countryName }}</span>
+                                        quelqu'un lit <span class="font-medium text-ink">{{ item.path }}</span>
+                                    </span>
+                                    <span class="font-mono text-xs text-ink-muted shrink-0">{{ item.relativeTime }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+
+                        <div class="mt-4 pt-4 border-t border-line">
+                            <p class="font-mono text-xs font-medium text-ink-muted uppercase tracking-wide mb-2">Visiteurs · 7j · par pays</p>
+                            <div class="flex flex-wrap gap-2">
+                                {% for row in demoCountries %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-paper-dim border border-line text-xs">
+                                        <span class="text-ink-muted">{{ row.name }}</span>
+                                        <span class="font-mono font-semibold text-ink">{{ row.count }}</span>
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="mt-4 text-center font-mono text-xs text-ink-muted">Aperçu du tableau de bord · données de démonstration</p>
+    </div>
+</section>

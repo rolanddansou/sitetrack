@@ -155,7 +155,11 @@ export default class extends Controller {
         this.render(this.initialValue);
 
         this.frame = requestAnimationFrame(() => this.tick());
-        this.timer = setInterval(() => this.poll(), this.intervalValue);
+        // No urlValue means static demo data (e.g. the marketing homepage's
+        // product preview) — there's nothing to poll.
+        if (this.urlValue) {
+            this.timer = setInterval(() => this.poll(), this.intervalValue);
+        }
 
         this.onPointerDown = this.onPointerDown.bind(this);
         this.onPointerMove = this.onPointerMove.bind(this);
